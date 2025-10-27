@@ -1,0 +1,45 @@
+import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+import { Dialog } from './Dialog';
+
+// Copyright 2023 The MediaPipe Authors.
+
+// Licensed under the Apache License, Version 2.0 (the 'License');
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//      http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an 'AS IS' BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+export class Mediapipe {
+    handLandmarker: HandLandmarker | undefined;
+
+    constructor() {
+        this.handLandmarker = undefined;
+    }
+
+    async createHandLandmarker(): Promise<HandLandmarker | undefined> {
+        try {
+            const vision = await FilesetResolver.forVisionTasks(
+                '/wasm'
+            );
+
+            this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: 'hand_landmarker.task',
+                    delegate: 'GPU'
+                },
+                runningMode: 'VIDEO',
+                numHands: 2
+            });
+
+            return this.handLandmarker;
+        } catch (error: any) {
+            Dialog.showError(error.message);
+        }
+    }
+}
