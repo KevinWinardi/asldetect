@@ -1,10 +1,9 @@
 import type React from "react";
-import { act, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog } from "../../utils/Dialog";
 import { Tooltip } from "../../components/Tooltip";
 import type { BatchNormalizationLayerType, DenseLayerType, DropoutLayerType, LayerType } from "../../types/layerType";
 import { Model } from "../../utils/Model";
-import { layers } from "@tensorflow/tfjs";
 
 function InformationHelper() {
     return (
@@ -33,25 +32,40 @@ function InformationHelper() {
     );
 }
 
+function HeaderLayer({
+    id,
+    title,
+    removeLayerHandler,
+}: {
+    id: number,
+    title: string,
+    removeLayerHandler: (id: number) => {},
+}) {
+    return (
+        <div className="flex">
+            <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss">
+                {title}
+            </p>
+            <button
+                onClick={() => removeLayerHandler(id)}
+                className="px-4 py-2 bg-red-500 border rounded-se cursor-pointer group">
+                <i className="fa-solid fa-trash text-white transition duration-500 group-hover:opacity-75"></i>
+            </button>
+        </div>
+    );
+}
+
 export function Step3Page({
     isStep3Valid,
     setIsStep3Valid,
     sequentialModel,
     setSequentialModel,
 }: {
-    isStep3Valid: boolean,
-    setIsStep3Valid: React.Dispatch<React.SetStateAction<boolean>>,
+    isStep3Valid: { [key: string]: boolean },
+    setIsStep3Valid: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>,
     sequentialModel: LayerType[],
     setSequentialModel: React.Dispatch<React.SetStateAction<LayerType[]>>,
 }) {
-    useEffect(() => {
-        if(sequentialModel.length<=2){
-            setIsStep3Valid(false);
-            return;
-        }
-        setIsStep3Valid(true);
-    }, [sequentialModel]);
-
     const [isOpenOptionLayer, setIsOpenOptionLayer] = useState(false);
 
     function addLayerHandler(type: 'dense' | 'batchNormalization' | 'dropout') {
@@ -72,6 +86,8 @@ export function Step3Page({
                     updated.splice(updated.length - 1, 0, newLayer);
                     return updated;
                 })
+                setIsStep3Valid(prev => ({ ...prev, [`units-${id}`]: true }));
+                setIsStep3Valid(prev => ({ ...prev, [`activation-${id}`]: true }));
                 break;
             case 'batchNormalization':
                 setSequentialModel(prev => {
@@ -86,6 +102,8 @@ export function Step3Page({
                     updated.splice(updated.length - 1, 0, newLayer);
                     return updated;
                 });
+                setIsStep3Valid(prev => ({ ...prev, [`momentum-${id}`]: true }));
+                setIsStep3Valid(prev => ({ ...prev, [`epsilon-${id}`]: true }));
                 break;
             case 'dropout':
                 setSequentialModel(prev => {
@@ -99,7 +117,17 @@ export function Step3Page({
                     updated.splice(updated.length - 1, 0, newLayer);
                     return updated;
                 })
+                setIsStep3Valid(prev => ({ ...prev, [`rate-${id}`]: true }));
                 break;
+        }
+    }
+
+    async function removeLayerHandler(id: number) {
+        const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
+        if (confirmation.isConfirmed) {
+            setSequentialModel(prev =>
+                prev.filter(l => l.id !== id)
+            );
         }
     }
 
@@ -108,240 +136,250 @@ export function Step3Page({
             case 'dense':
                 return (
                     <div key={layer.id} className="flex flex-col">
-                        <div className="flex">
-                            <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss">
-                                Dense
-                            </p>
-                            <button
-                                onClick={async () => {
-                                    const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
-                                    if (confirmation.isConfirmed) {
-                                        setSequentialModel(prev =>
-                                            prev.filter(l => l.id !== layer.id)
-                                        );
+                        <div className="flex flex-col">
+                            <HeaderLayer id={layer.id} title="Dense" removeLayerHandler={removeLayerHandler} />
+
+                            <div className="flex flex-col gap-4 p-4 border rounded rounded-tl-none shadow">
+                                <div>
+                                    <div className="flex flex-row">
+                                        <label
+                                            htmlFor={`units-${layer.id}`}
+                                            className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
+                                            units
+                                        </label>
+                                        <input
+                                            value={layer.units}
+                                            onChange={(e) => {
+                                                const value = Number(e.target.value);
+                                                let validity = true;
+                                                if (isNaN(value) || !Number.isInteger(value) || value <= 0) {
+                                                    validity = false;
+                                                }
+                                                setIsStep3Valid(prev => ({ ...prev, [`units-${layer.id}`]: validity }));
+
+                                                setSequentialModel(prev =>
+                                                    prev.map(l =>
+                                                        l.id === layer.id ? { ...l, units: value } : l
+                                                    )
+                                                );
+                                            }}
+                                            id={`units-${layer.id}`}
+                                            type="number"
+                                            step={1}
+                                            min={1}
+                                            className="w-full p-2 border rounded-se rounded-ee" />
+                                        <Tooltip text="Number of neurons" />
+                                    </div>
+                                    {
+                                        !isStep3Valid[`units-${layer.id}`] && (
+                                            <p className="text-red-500 text-sm">Input must be positive integer number</p>
+                                        )
                                     }
-                                }}
-                                className="px-4 py-2 bg-red-500 border rounded-se cursor-pointer group">
-                                <i className="fa-solid fa-trash text-white transition duration-500 group-hover:opacity-75"></i>
-                            </button>
-                        </div>
-                        <div className="flex flex-col gap-4 p-4 border rounded rounded-tl-none shadow">
-                            <div className="flex flex-row">
-                                <label
-                                    htmlFor={`units-${layer.id}`}
-                                    className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
-                                    units
-                                </label>
-                                <input
-                                    value={layer.units}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        if (isNaN(value) || !Number.isInteger(value) || value <= 0) {
-                                            return Dialog.showError('Input must be positive integer number');
-                                        }
+                                </div>
 
-                                        setSequentialModel(prev =>
-                                            prev.map(l =>
-                                                l.id === layer.id ? { ...l, units: value } : l
-                                            )
-                                        );
-                                    }}
-                                    id={`units-${layer.id}`}
-                                    type="number"
-                                    step={1}
-                                    min={1}
-                                    className="w-full p-2 border rounded-se rounded-ee" />
-                                <Tooltip text="Number of neurons" />
-                            </div>
-                            <div className="flex flex-row">
-                                <label
-                                    htmlFor={`activation-${layer.id}`}
-                                    className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
-                                    activation
-                                </label>
-                                <select
-                                    value={layer.activation}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setSequentialModel(prev =>
-                                            prev.map(l =>
-                                                l.id === layer.id && l.type === 'dense'
-                                                    ? { ...l, activation: value }
-                                                    : l
-                                            )
-                                        );
+                                <div>
+                                    <div className="flex flex-row">
+                                        <label
+                                            htmlFor={`activation-${layer.id}`}
+                                            className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
+                                            activation
+                                        </label>
+                                        <select
+                                            id={`activation-${layer.id}`}
+                                            value={layer.activation}
+                                            required
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                let validity = true;
+                                                if (!['relu', 'elu', 'swish', 'tanh'].includes(value)) {
+                                                    validity = false;
+                                                }
 
-                                    }}
-                                    id={`activation-${layer.id}`}
-                                    className="w-full p-2 border rounded-se rounded-ee"
-                                >
-                                    <option value="relu" className="border-4 bg-blue-100">relu</option>
-                                    <option value="elu" className="border-4 bg-blue-100">elu</option>
-                                    <option value="swish" className="border-4 bg-blue-100">swish</option>
-                                    <option value="tanh" className="border-4 bg-blue-100">tanh</option>
-                                </select>
-                                <Tooltip html={
-                                    <>
-                                        <p className="mt-2">Applies a non-linear function to help the model learn complex patterns.</p>
-                                        <div className="grid grid-cols-[auto_1fr] gap-2">
-                                            <span className="font-mono">- relu:</span>
-                                            <span>simple, fast, avoids vanishing gradients, works well in almost all deep nets</span>
-                                        </div>
-                                        <div className="grid grid-cols-[auto_1fr] gap-2">
-                                            <span className="font-mono">- elu:</span>
-                                            <span>smooth version of relu; works better with negative inputs</span>
-                                        </div>
-                                        <div className="grid grid-cols-[auto_1fr] gap-2">
-                                            <span className="font-mono">- swish:</span>
-                                            <span>newer relu alternative; often slightly better performance</span>
-                                        </div>
-                                        <div className="grid grid-cols-[auto_1fr] gap-2">
-                                            <span className="font-mono">- tanh:</span>
-                                            <span>older, still good for small or normalized inputs; outputs in [-1, 1]</span>
-                                        </div>
-                                    </>
-                                } />
+                                                setIsStep3Valid(prev => ({ ...prev, [`activation-${layer.id}`]: validity }));
+
+                                                setSequentialModel(prev =>
+                                                    prev.map(l =>
+                                                        l.id === layer.id && l.type === 'dense'
+                                                            ? { ...l, activation: value }
+                                                            : l
+                                                    )
+                                                );
+
+                                            }}
+                                            className="w-full p-2 border rounded-se rounded-ee"
+                                        >
+                                            <option value="relu" className="border-4 bg-blue-100">relu</option>
+                                            <option value="elu" className="border-4 bg-blue-100">elu</option>
+                                            <option value="swish" className="border-4 bg-blue-100">swish</option>
+                                            <option value="tanh" className="border-4 bg-blue-100">tanh</option>
+                                        </select>
+                                        <Tooltip html={
+                                            <>
+                                                <p>Applies a non-linear function to help the model learn complex patterns.</p>
+                                                <div className="grid grid-cols-[auto_1fr] gap-2">
+                                                    <span className="font-mono">- relu:</span>
+                                                    <span>simple, fast, avoids vanishing gradients, works well in almost all deep nets</span>
+                                                </div>
+                                                <div className="grid grid-cols-[auto_1fr] gap-2">
+                                                    <span className="font-mono">- elu:</span>
+                                                    <span>smooth version of relu; works better with negative inputs</span>
+                                                </div>
+                                                <div className="grid grid-cols-[auto_1fr] gap-2">
+                                                    <span className="font-mono">- swish:</span>
+                                                    <span>newer relu alternative; often slightly better performance</span>
+                                                </div>
+                                                <div className="grid grid-cols-[auto_1fr] gap-2">
+                                                    <span className="font-mono">- tanh:</span>
+                                                    <span>older, still good for small or normalized inputs; outputs in [-1, 1]</span>
+                                                </div>
+                                            </>
+                                        } />
+                                    </div>
+                                    {
+                                        !isStep3Valid[`activation-${layer.id}`] && (
+                                            <p className="text-red-500 text-sm">Activation can be used are relu, elu, swish, and tanh</p>
+                                        )
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
                 );
-                break;
             case 'batchNormalization':
                 return (
                     <div key={layer.id} className="flex flex-col">
-                        <div className="flex">
-                            <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss">
-                                BatchNormalization
-                            </p>
-                            <button
-                                onClick={async () => {
-                                    const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
-                                    if (confirmation.isConfirmed) {
-                                        setSequentialModel(prev =>
-                                            prev.filter(l => l.id !== layer.id)
-                                        );
-                                    }
-                                }}
-                                className="px-4 py-2 bg-red-500 border rounded-se cursor-pointer group">
-                                <i className="fa-solid fa-trash text-white transition duration-500 group-hover:opacity-75"></i>
-                            </button>
-                        </div>
+                        <HeaderLayer id={layer.id} title="BatchNormalization" removeLayerHandler={removeLayerHandler} />
 
                         <div className="flex flex-col gap-4 p-4 border rounded rounded-tl-none shadow">
-                            <div className="flex flex-row">
-                                <label
-                                    htmlFor={`momentum-${layer.id}`}
-                                    className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
-                                    momentum
-                                </label>
-                                <input
-                                    value={layer.momentum}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        if (isNaN(value) || value <= 0 || value >= 1) {
-                                            return Dialog.showError('Input must be a float greater than 0 and less than 1(e.g., 0.99)');
-                                        }
+                            <div>
+                                <div className="flex flex-row">
+                                    <label
+                                        htmlFor={`momentum-${layer.id}`}
+                                        className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
+                                        momentum
+                                    </label>
+                                    <input
+                                        value={layer.momentum}
+                                        id={`momentum-${layer.id}`}
+                                        type="number"
+                                        step={0.01}
+                                        min={0.00}
+                                        max={1}
+                                        className="w-full p-2 border rounded-se rounded-ee"
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            let validity = true;
+                                            if (isNaN(value) || value <= 0 || value >= 1) {
+                                                validity = false;
+                                            }
 
-                                        setSequentialModel(prev =>
-                                            prev.map(l =>
-                                                l.id === layer.id ? { ...l, momentum: value } : l
-                                            )
-                                        );
-                                    }}
-                                    id={`momentum-${layer.id}`}
-                                    type="number"
-                                    step={0.01}
-                                    min={0.000}
-                                    max={1}
-                                    className="w-full p-2 border rounded-se rounded-ee" />
-                                <Tooltip text="How much past mean/variance are kept" />
+                                            setIsStep3Valid(prev => ({ ...prev, [`momentum-${layer.id}`]: validity }));
+
+                                            setSequentialModel(prev =>
+                                                prev.map(l =>
+                                                    l.id === layer.id ? { ...l, momentum: value } : l
+                                                )
+                                            );
+                                        }}
+                                    />
+                                    <Tooltip text="How much past mean/variance are kept" />
+                                </div>
+                                {
+                                    !isStep3Valid[`momentum-${layer.id}`] && (
+                                        <p className="text-red-500 text-sm">Input must be a float greater than 0 and less than 1(e.g., 0.99)</p>
+                                    )
+                                }
                             </div>
-                            <div className="flex flex-row">
-                                <label
-                                    htmlFor={`epsilon-${layer.id}`}
-                                    className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
-                                    epsilon
-                                </label>
-                                <input
-                                    value={layer.epsilon}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        if (isNaN(value) || value <= 0 || value >= 1) {
-                                            return Dialog.showError('Input must be float in range from 0.00001 - 0.001');
-                                        }
 
-                                        setSequentialModel(prev =>
-                                            prev.map(l =>
-                                                l.id === layer.id ? { ...l, epsilon: value } : l
-                                            )
-                                        );
-                                    }}
-                                    id={`epsilon-${layer.id}`}
-                                    type="number"
-                                    step={0.00001}
-                                    min={0.00000}
-                                    max={0.001}
-                                    className="w-full p-2 border rounded-se rounded-ee" />
-                                <Tooltip text="Small value to avoid division by zero" />
+                            <div>
+                                <div className="flex flex-row">
+                                    <label
+                                        htmlFor={`epsilon-${layer.id}`}
+                                        className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
+                                        epsilon
+                                    </label>
+                                    <input
+                                        value={layer.epsilon}
+                                        id={`epsilon-${layer.id}`}
+                                        type="number"
+                                        step={0.00001}
+                                        min={0.00000}
+                                        max={0.001}
+                                        className="w-full p-2 border rounded-se rounded-ee"
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            let validity = true;
+                                            if (isNaN(value) || value <= 0 || value >= 1) {
+                                                validity = false;
+                                            }
+
+                                            setIsStep3Valid(prev => ({ ...prev, [`epsilon-${layer.id}`]: validity }));
+
+                                            setSequentialModel(prev =>
+                                                prev.map(l =>
+                                                    l.id === layer.id ? { ...l, epsilon: value } : l
+                                                )
+                                            );
+                                        }}
+                                    />
+                                    <Tooltip text="Small value to avoid division by zero" />
+                                </div>
+                                {
+                                    !isStep3Valid[`epsilon-${layer.id}`] && (
+                                        <p className="text-red-500 text-sm">Input must be float in range from 0.00001 - 0.001</p>
+                                    )
+                                }
                             </div>
                         </div>
                     </div>
                 );
-                break;
             case 'dropout':
                 return (
                     <div key={layer.id} className="flex flex-col">
-                        <div className="flex">
-                            <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss">
-                                Dropout
-                            </p>
-                            <button
-                                onClick={async () => {
-                                    const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
-                                    if (confirmation.isConfirmed) {
-                                        setSequentialModel(prev =>
-                                            prev.filter(l => l.id !== layer.id)
-                                        );
-                                    }
-                                }}
-                                className="px-4 py-2 bg-red-500 border rounded-se cursor-pointer group">
-                                <i className="fa-solid fa-trash text-white transition duration-500 group-hover:opacity-75"></i>
-                            </button>
-                        </div>
+                        <HeaderLayer id={layer.id} title="Dropout" removeLayerHandler={removeLayerHandler} />
 
                         <div className="flex flex-col gap-4 p-4 border rounded rounded-tl-none shadow">
-                            <div className="flex flex-row">
-                                <label
-                                    htmlFor={`rate-${layer.id}`}
-                                    className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
-                                    rate
-                                </label>
-                                <input
-                                    value={layer.rate}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        if (isNaN(value) || value <= 0 || value >= 1) {
-                                            return Dialog.showError('Input must be a float greater than 0 and less than 1 (e.g., 0.4)');
-                                        }
+                            <div>
+                                <div className="flex flex-row">
+                                    <label
+                                        htmlFor={`rate-${layer.id}`}
+                                        className="flex items-center justify-center w-max px-2 font-mono text-black bg-gray-300 border border-black rounded-ss rounded-es">
+                                        rate
+                                    </label>
+                                    <input
+                                        value={layer.rate}
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            let validity = true;
+                                            if (isNaN(value) || value <= 0 || value >= 1) {
+                                                validity = false
+                                            }
 
-                                        setSequentialModel(prev =>
-                                            prev.map(l =>
-                                                l.id === layer.id ? { ...l, rate: value } : l
-                                            )
-                                        );
-                                    }}
-                                    id={`rate-${layer.id}`}
-                                    type="number"
-                                    step={0.1}
-                                    min={0.0}
-                                    max={1}
-                                    className="w-full p-2 border rounded-se rounded-ee" />
-                                <Tooltip text="Fraction (0-1) of neurons to drop" />
+                                            setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: validity }));
+
+                                            setSequentialModel(prev =>
+                                                prev.map(l =>
+                                                    l.id === layer.id ? { ...l, rate: value } : l
+                                                )
+                                            );
+                                        }}
+                                        id={`rate-${layer.id}`}
+                                        type="number"
+                                        step={0.1}
+                                        min={0.0}
+                                        max={1}
+                                        className="w-full p-2 border rounded-se rounded-ee" />
+                                    <Tooltip text="Fraction (0-1) of neurons to drop" />
+                                </div>
+                                {
+                                    !isStep3Valid[`rate-${layer.id}`] && (
+                                        <p className="text-red-500 text-sm">Input must be a float greater than 0 and less than 1 (e.g., 0.5)</p>
+                                    )
+                                }
                             </div>
                         </div>
                     </div>
                 );
-                break;
         }
     }
 
@@ -410,7 +448,7 @@ export function Step3Page({
 
                     <div className="flex flex-col">
                         <div className="flex">
-                            <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss">
+                            <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">
                                 Output
                             </p>
                         </div>
@@ -451,7 +489,23 @@ export function Step3Page({
                 <div className="flex justify-center mt-12">
                     <button
                         onClick={() => {
-                            setSequentialModel(Model.recommendedLayer())
+                            const recommendedLayer: LayerType[] = Model.recommendedLayer();
+                            setIsStep3Valid({});
+                            recommendedLayer.forEach(item => {
+                                switch (item.type) {
+                                    case 'dense':
+                                        setIsStep3Valid(prev => ({ ...prev, [`units-${item.id}`]: true }));
+                                        setIsStep3Valid(prev => ({ ...prev, [`activation-${item.id}`]: true }));
+                                        break;
+                                    case 'batchNormalization':
+                                        setIsStep3Valid(prev => ({ ...prev, [`momentum-${item.id}`]: true }));
+                                        setIsStep3Valid(prev => ({ ...prev, [`epsilon-${item.id}`]: true }));
+                                        break;
+                                    case 'dropout':
+                                        setIsStep3Valid(prev => ({ ...prev, [`rate-${item.id}`]: true }));
+                                }
+                            });
+                            setSequentialModel(recommendedLayer);
                         }}
                         className={`
                             px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
@@ -461,7 +515,7 @@ export function Step3Page({
                         <i className="fa-solid fa-star"></i> Use recommended
                     </button>
                 </div>
-            </section>
+            </section >
         </>
     );
 }

@@ -1,4 +1,4 @@
-export function HomePage() {
+export function DetectionPage() {
     return (
         <>
             <h1 className="font-bold text-4xl text-center text-yellow-900">Detection</h1>

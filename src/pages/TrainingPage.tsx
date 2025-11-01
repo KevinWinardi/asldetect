@@ -7,6 +7,8 @@ import type { LayerType } from "../types/layerType";
 import type { SplitDataType } from "../types/splitDataType";
 import { Model } from "../utils/Model";
 import { Step4Page } from "./StepTrainings/Step4Page";
+import type { CompileType } from "../types/compileType";
+import { Step5Page } from "./StepTrainings/Step5Page";
 
 export function TrainingPage() {
     const datasetInputElementRef = useRef<HTMLInputElement | null>(null);
@@ -16,17 +18,41 @@ export function TrainingPage() {
 
     const tensorflowfDatasetRef = useRef<tf.data.CSVDataset | null>(null);
 
-    const [currentIndexStep, setCurrentIndexStep] = useState(0);
+    const [currentIndexStep, setCurrentIndexStep] = useState(2);
 
-    const [splitData, setSplitData] = useState<SplitDataType>({});
+    const [splitData, setSplitData] = useState<SplitDataType>({
+        train: 0,
+        val: 0,
+        test: 0,
+    });
     const [sequentialModel, setSequentialModel] = useState<LayerType[]>([]);
+    const [compileModel, setCompileModel] = useState<CompileType>({
+        optimizer: 'adam',
+        learningRate: 0.001,
+        loss: 'categoricalCrossentropy',
+        metrics: 'accuracy',
+    });
 
     const [isStep1Valid, setIsStep1Valid] = useState(false);
     const [isStep2Valid, setIsStep2Valid] = useState(false);
-    const [isStep3Valid, setIsStep3Valid] = useState(false);
+    const [isStep3Valid, setIsStep3Valid] = useState<{
+        [key: string]: boolean
+    }>({});
+    const [isStep4Valid, setIsStep4Valid] = useState<{
+        [key: string]: boolean
+    }>({
+        optimizer: true,
+        learningRate: true,
+    });
 
     useEffect(() => {
         setSequentialModel(Model.initLayer());
+        setCompileModel({
+            optimizer: 'adam',
+            learningRate: 0.001,
+            loss: 'categoricalCrossentropy',
+            metrics: 'accuracy'
+        })
         return () => {
 
         }
@@ -35,7 +61,8 @@ export function TrainingPage() {
     function isNextButtonDisabled() {
         if (currentIndexStep === 0) return !isStep1Valid;
         if (currentIndexStep === 1) return !isStep2Valid;
-        if (currentIndexStep === 2) return !isStep3Valid;
+        if (currentIndexStep === 2) return !Object.values(isStep3Valid).every(y => y === true);
+        if (currentIndexStep === 3) return !Object.values(isStep4Valid).every(y => y === true);
         return;
     }
 
@@ -58,6 +85,16 @@ export function TrainingPage() {
             setSequentialModel={setSequentialModel}
         />,
         <Step4Page
+            isStep4Valid={isStep4Valid}
+            setIsStep4Valid={setIsStep4Valid}
+            compileModel={compileModel}
+            setCompileModel={setCompileModel}
+        />,
+        <Step5Page
+            tensorflowDataset={tensorflowfDatasetRef.current}
+            splitData={splitData}
+            sequentialModel={sequentialModel}
+            compileModel={compileModel}
         />
     ];
 
@@ -71,7 +108,7 @@ export function TrainingPage() {
                 <div className="flex justify-between mt-8">
                     <button
                         ref={backButtonElementRef}
-                        onClick={() => setCurrentIndexStep((prev) => prev - 1)}
+                        onClick={() => { setCurrentIndexStep((prev) => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                         className={`${currentIndexStep == 0 && 'invisible'} 
                             px-4 py-2 font-bold text-white bg-gray-500 border-b-4 border-black rounded
                             cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
@@ -82,7 +119,7 @@ export function TrainingPage() {
                     <button
                         disabled={isNextButtonDisabled()}
                         ref={nextButtonElementRef}
-                        onClick={() => setCurrentIndexStep((prev) => prev + 1)}
+                        onClick={() => { setCurrentIndexStep((prev) => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                         className={`${currentIndexStep == steps.length - 1 && 'invisible'} 
                             px-4 py-2 font-bold text-white bg-blue-500 border-b-4 border-black
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75

@@ -8,7 +8,7 @@ export type DenseLayerType = {
     id: number,
     type: 'dense',
     units: number,
-    activation: string,
+    activation: 'relu' | 'elu' | 'swish' | 'tanh',
 }
 
 export type BatchNormalizationLayerType = {

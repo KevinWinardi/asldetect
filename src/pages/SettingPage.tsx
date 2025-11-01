@@ -1,7 +1,6 @@
-export function ProfilePage() {
+export function SettingPage() {
     return (
         <>
-
         </>
     );
 }

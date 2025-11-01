@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
-import { useAuthContext } from "../contexts/AuthContext";
 import { useState } from "react";
 
 export function Header() {
-    const { isAuth } = useAuthContext();
     const [openMenu, setOpenMenu] = useState(false);
 
     return (
@@ -18,7 +16,8 @@ export function Header() {
                 <div>
                     <nav>
                         <ul className="flex gap-8 font-semibold">
-                            <li><Link to='/' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Detection</Link></li>
+                            <li><Link to='/' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Home</Link></li>
+                            <li><Link to='/detection' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Detection</Link></li>
                             <li><Link to='/dataset' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Dataset</Link></li>
                             <li><Link to='/training' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Training</Link></li>
                         </ul>
@@ -27,7 +26,7 @@ export function Header() {
 
                 <div>
                     <Link
-                        to='/login'
+                        to='/setting'
                         className="block p-2 text-white bg-blue-500 font-semibold rounded-md transition hover:opacity-75 hover:scale-90 cursor-pointer"
                         onClick={() => setOpenMenu(false)}
                     >
@@ -59,6 +58,15 @@ export function Header() {
                                 className="block p-4 hover:bg-blue-500 hover:text-white transition"
                                 onClick={() => setOpenMenu(false)}
                             >
+                                Detection
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/dataset"
+                                className="block p-4 hover:bg-blue-500 hover:text-white transition"
+                                onClick={() => setOpenMenu(false)}
+                            >
                                 Dataset
                             </Link>
                         </li>
@@ -75,7 +83,7 @@ export function Header() {
                 </nav>
 
                 <Link
-                    to={'/login'}
+                    to={'/setting'}
                     className="block w-max m-4 p-2 text-white bg-blue-500 font-semibold rounded-md transition hover:opacity-75 hover:scale-90 cursor-pointer"
                     onClick={() => setOpenMenu(false)}
                 >

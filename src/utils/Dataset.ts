@@ -1,4 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
+import type { SplitDataType } from '../types/splitDataType';
 
 export class Dataset {
     arrayData: (number | string)[][];
@@ -30,7 +31,7 @@ export class Dataset {
             ]
         ];
     }
-    
+
     async checkValidityDataset(file: File): Promise<boolean> {
         const header = this.arrayData[0];
 
@@ -75,6 +76,100 @@ export class Dataset {
         });
 
         return data;
+    }
+
+    static async preprocessDataset(tensorflowDataset: tf.data.CSVDataset | null, splitData: SplitDataType) {
+        if (!tensorflowDataset) {
+            throw new Error('Dataset cannot be null');
+        }
+        const typedDataset = tensorflowDataset as unknown as tf.data.Dataset<{
+            xs: tf.TensorContainer;
+            ys: tf.TensorContainer;
+        }>;
+
+        const pointsDataset = typedDataset.map(({ xs, ys }) => {
+            const xsTensor = Object.values(xs as Record<string, number>);
+            const ysTensor = Object.values(ys as Record<string, string>)[0];
+            return { xs: xsTensor, ys: ysTensor };
+        });
+
+        const dataArray = await pointsDataset.toArray();
+        const featureArray = dataArray.map(d => d.xs);
+        const labelArray = dataArray.map(d => d.ys);
+
+        // Label encoding
+        const uniqueLabels = [...new Set(labelArray)];
+        const labelToIndex = Object.fromEntries(uniqueLabels.map((label, idx) => [label, idx]));
+        const encodedLabels = labelArray.map(label => labelToIndex[label]);
+
+        // Stratified split
+        const trainRatio = splitData.train / 100;
+        const valRatio = splitData.val / 100;
+
+        const perLabelIndices: Record<string, number[]> = {};
+        uniqueLabels.forEach(label => {
+            perLabelIndices[label] = [];
+        });
+
+        // Group index per label
+        encodedLabels.forEach((label, i) => {
+            const labelName = uniqueLabels[label];
+            perLabelIndices[labelName].push(i);
+        });
+
+        const trainIdx = [];
+        const valIdx = [];
+        const testIdx = [];
+
+        for (const label of uniqueLabels) {
+            const indices = perLabelIndices[label];
+            tf.util.shuffle(indices);
+
+            const nTotal = indices.length;
+            const nTrain = Math.floor(nTotal * trainRatio);
+            const nVal = Math.floor(nTotal * valRatio);
+
+            trainIdx.push(...indices.slice(0, nTrain));
+            valIdx.push(...indices.slice(nTrain, nTrain + nVal));
+            testIdx.push(...indices.slice(nTrain + nVal));
+        }
+
+        // Get data from split index
+        const xTrainArray = trainIdx.map(i => featureArray[i]);
+        const yTrainArray = trainIdx.map(i => encodedLabels[i]);
+        const xValArray = valIdx.map(i => featureArray[i]);
+        const yValArray = valIdx.map(i => encodedLabels[i]);
+        const xTestArray = testIdx.map(i => featureArray[i]);
+        const yTestArray = testIdx.map(i => encodedLabels[i]);
+
+        // Create tensor
+        const xTrain = tf.tensor2d(xTrainArray);
+        const xVal = tf.tensor2d(xValArray);
+        const xTest = tf.tensor2d(xTestArray);
+
+        const yTrain = tf.oneHot(tf.tensor1d(yTrainArray, 'int32'), uniqueLabels.length).toFloat();
+        const yVal = tf.oneHot(tf.tensor1d(yValArray, 'int32'), uniqueLabels.length).toFloat();
+        const yTest = tf.oneHot(tf.tensor1d(yTestArray, 'int32'), uniqueLabels.length).toFloat();
+
+        // Standarize
+        const { mean, variance } = tf.moments(xTrain, 0);
+        const std = tf.sqrt(variance);
+
+        const xTrainNorm = xTrain.sub(mean).div(std);
+        const xValNorm = xVal.sub(mean).div(std);
+        const xTestNorm = xTest.sub(mean).div(std);
+
+        return {
+            xTrain: xTrainNorm,
+            xVal: xValNorm,
+            xTest: xTestNorm,
+            yTrain,
+            yVal,
+            yTest,
+            mean,
+            std,
+            uniqueLabels,
+        };
     }
 
     addDataToArray(data: (number | string)[]): void {
