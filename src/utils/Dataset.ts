@@ -35,7 +35,6 @@ export class Dataset {
     async checkValidityDataset(file: File): Promise<boolean> {
         const header = this.arrayData[0];
 
-        console.log(file);
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsText(file);
@@ -152,12 +151,20 @@ export class Dataset {
         const yTest = tf.oneHot(tf.tensor1d(yTestArray, 'int32'), uniqueLabels.length).toFloat();
 
         // Standarize
-        const { mean, variance } = tf.moments(xTrain, 0);
-        const std = tf.sqrt(variance);
+        const { xTrainNorm, xValNorm, xTestNorm, mean, std } = tf.tidy(() => {
+            const { mean, variance } = tf.moments(xTrain, 0);
+            const std = tf.sqrt(variance);
 
-        const xTrainNorm = xTrain.sub(mean).div(std);
-        const xValNorm = xVal.sub(mean).div(std);
-        const xTestNorm = xTest.sub(mean).div(std);
+            const xTrainNorm = xTrain.sub(mean).div(std);
+            const xValNorm = xVal.sub(mean).div(std);
+            const xTestNorm = xTest.sub(mean).div(std);
+
+            return { xTrainNorm, xValNorm, xTestNorm, mean, std };
+        });
+
+        xTrain.dispose();
+        xVal.dispose();
+        xTest.dispose();
 
         return {
             xTrain: xTrainNorm,

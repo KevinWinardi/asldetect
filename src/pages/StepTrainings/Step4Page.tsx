@@ -8,8 +8,14 @@ export function Step4Page({
     compileModel,
     setCompileModel,
 }: {
-    isStep4Valid: { [key: string]: boolean },
-    setIsStep4Valid: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>,
+    isStep4Valid: {
+        optimizer: boolean,
+        learningRate: boolean,
+    },
+    setIsStep4Valid: React.Dispatch<React.SetStateAction<{
+        optimizer: boolean,
+        learningRate: boolean,
+    }>>,
     compileModel: CompileType,
     setCompileModel: React.Dispatch<React.SetStateAction<CompileType>>,
 }) {

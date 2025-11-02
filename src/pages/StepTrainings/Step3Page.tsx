@@ -58,13 +58,13 @@ function HeaderLayer({
 export function Step3Page({
     isStep3Valid,
     setIsStep3Valid,
-    sequentialModel,
-    setSequentialModel,
+    layerModel,
+    setLayerModel,
 }: {
     isStep3Valid: { [key: string]: boolean },
     setIsStep3Valid: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>,
-    sequentialModel: LayerType[],
-    setSequentialModel: React.Dispatch<React.SetStateAction<LayerType[]>>,
+    layerModel: LayerType[],
+    setLayerModel: React.Dispatch<React.SetStateAction<LayerType[]>>,
 }) {
     const [isOpenOptionLayer, setIsOpenOptionLayer] = useState(false);
 
@@ -74,7 +74,7 @@ export function Step3Page({
         const id = +new Date();
         switch (type) {
             case 'dense':
-                setSequentialModel(prev => {
+                setLayerModel(prev => {
                     const newLayer: DenseLayerType = {
                         id: id,
                         type: 'dense',
@@ -90,7 +90,7 @@ export function Step3Page({
                 setIsStep3Valid(prev => ({ ...prev, [`activation-${id}`]: true }));
                 break;
             case 'batchNormalization':
-                setSequentialModel(prev => {
+                setLayerModel(prev => {
                     const newLayer: BatchNormalizationLayerType = {
                         id: id,
                         type: 'batchNormalization',
@@ -106,7 +106,7 @@ export function Step3Page({
                 setIsStep3Valid(prev => ({ ...prev, [`epsilon-${id}`]: true }));
                 break;
             case 'dropout':
-                setSequentialModel(prev => {
+                setLayerModel(prev => {
                     const newLayer: DropoutLayerType = {
                         id: id,
                         type: 'dropout',
@@ -125,7 +125,7 @@ export function Step3Page({
     async function removeLayerHandler(id: number) {
         const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
         if (confirmation.isConfirmed) {
-            setSequentialModel(prev =>
+            setLayerModel(prev =>
                 prev.filter(l => l.id !== id)
             );
         }
@@ -157,7 +157,7 @@ export function Step3Page({
                                                 }
                                                 setIsStep3Valid(prev => ({ ...prev, [`units-${layer.id}`]: validity }));
 
-                                                setSequentialModel(prev =>
+                                                setLayerModel(prev =>
                                                     prev.map(l =>
                                                         l.id === layer.id ? { ...l, units: value } : l
                                                     )
@@ -197,10 +197,10 @@ export function Step3Page({
 
                                                 setIsStep3Valid(prev => ({ ...prev, [`activation-${layer.id}`]: validity }));
 
-                                                setSequentialModel(prev =>
+                                                setLayerModel(prev =>
                                                     prev.map(l =>
                                                         l.id === layer.id && l.type === 'dense'
-                                                            ? { ...l, activation: value }
+                                                            ? ({ ...l, activation: value } as LayerType)
                                                             : l
                                                     )
                                                 );
@@ -275,7 +275,7 @@ export function Step3Page({
 
                                             setIsStep3Valid(prev => ({ ...prev, [`momentum-${layer.id}`]: validity }));
 
-                                            setSequentialModel(prev =>
+                                            setLayerModel(prev =>
                                                 prev.map(l =>
                                                     l.id === layer.id ? { ...l, momentum: value } : l
                                                 )
@@ -315,7 +315,7 @@ export function Step3Page({
 
                                             setIsStep3Valid(prev => ({ ...prev, [`epsilon-${layer.id}`]: validity }));
 
-                                            setSequentialModel(prev =>
+                                            setLayerModel(prev =>
                                                 prev.map(l =>
                                                     l.id === layer.id ? { ...l, epsilon: value } : l
                                                 )
@@ -357,7 +357,7 @@ export function Step3Page({
 
                                             setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: validity }));
 
-                                            setSequentialModel(prev =>
+                                            setLayerModel(prev =>
                                                 prev.map(l =>
                                                     l.id === layer.id ? { ...l, rate: value } : l
                                                 )
@@ -413,7 +413,7 @@ export function Step3Page({
                         </div>
                     </div>
 
-                    {sequentialModel.map(layer => renderLayer(layer))}
+                    {layerModel.map(layer => renderLayer(layer))}
 
                     <div>
                         <button
@@ -505,7 +505,7 @@ export function Step3Page({
                                         setIsStep3Valid(prev => ({ ...prev, [`rate-${item.id}`]: true }));
                                 }
                             });
-                            setSequentialModel(recommendedLayer);
+                            setLayerModel(recommendedLayer);
                         }}
                         className={`
                             px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded

@@ -50,11 +50,12 @@ export function Step1Page({
         <>
             <h2 className="font-bold text-2xl text-left text-gray-700">1. Upload your dataset file</h2>
 
-            <div className={`relative flex justify-center items-center w-full min-h-48 mt-4 border-2 border-dashed transition duration-500 ${isStep1Valid ? 'border-green-500' : 'border-gray-500'} rounded hover:border-green-500 hover:border-4 hover:bg-green-100`}>
+            <div className={`relative flex justify-center items-center w-full min-h-48 mt-4 border-2 border-dashed transition duration-500 
+                ${isStep1Valid ? 'border-green-500' : 'border-gray-500'} rounded hover:border-green-500 hover:border-4 hover:bg-green-100`}>
                 <label htmlFor="dataset-input" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
                     w-full h-full flex flex-col justify-center items-center gap-4 
                     font-semibold text-gray-500 cursor-pointer transition-opacity hover:opacity-50">
-                    <i className={`fa-solid ${isStep1Valid ? 'fa-rotate': 'fa-upload'} text-4xl`}></i>
+                    <i className={`fa-solid ${isStep1Valid ? 'fa-rotate' : 'fa-upload'} text-4xl`}></i>
                     {isStep1Valid ? 'Data successfully loadded ✅' : 'Upload your (.csv) file'}
                 </label>
                 <input
