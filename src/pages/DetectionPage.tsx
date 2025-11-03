@@ -4,7 +4,6 @@ import { Canvas } from "../utils/Canvas";
 import { Mediapipe } from "../utils/Mediapipe";
 import { Dialog } from "../utils/Dialog";
 import { Model } from "../utils/Model";
-import { model } from "@tensorflow/tfjs";
 
 export function DetectionPage() {
     const [isCameraRunning, setIsCameraRunnning] = useState(false);

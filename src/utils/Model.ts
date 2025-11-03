@@ -4,7 +4,7 @@ import type { SplitDataType } from '../types/splitDataType';
 import type { CompileType } from '../types/compileType';
 import { Dataset } from './Dataset';
 import type { FitModelType } from '../types/fitModelType';
-import type { HandLandmarker, NormalizedLandmark } from '@mediapipe/tasks-vision';
+import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 
 export class Model {
     model: tf.Sequential;
@@ -173,7 +173,7 @@ export class Model {
                 yTest,
                 mean,
                 std,
-                uniqueLabels,
+                // uniqueLabels,
             } = await Dataset.preprocessDataset(this.tensorflowDataset, this.splitData);
 
             this.createModel(this.layerModel, this.compileModel);

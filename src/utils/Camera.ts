@@ -193,7 +193,7 @@ export class Camera {
         },
     ): Promise<void> {
         const loadModel = await tf.loadLayersModel('./asl_model.json');
-        return new Promise((resolve, reject) => {
+        return new Promise((_, reject) => {
             const loop = () => {
                 try {
                     if (!handLandmarker || !canvasInstance || !this.videoElement) {
