@@ -31,8 +31,8 @@ export function Step5Page({
     }>>,
     fitModel: FitModelType,
     setFitModel: React.Dispatch<React.SetStateAction<{
-        epochs: number | string;
-        batchSize: number | string;
+        epochs: number;
+        batchSize: number;
     }>>,
     tensorflowDataset: tf.data.CSVDataset | null,
     splitData: SplitDataType,

@@ -31,11 +31,11 @@ export function TrainingPage() {
         metrics: 'accuracy',
     });
     const [fitModel, setFitModel] = useState<{
-        epochs: number|string,
-        batchSize: number|string,
+        epochs: number,
+        batchSize: number,
     }>({
-        epochs: '',
-        batchSize: '',
+        epochs: 10,
+        batchSize: 32,
     })
 
     const [isStep1Valid, setIsStep1Valid] = useState(false);
