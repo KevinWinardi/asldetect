@@ -7,6 +7,7 @@ import { Model } from "../utils/Model";
 
 export function DetectionPage() {
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
+    const [displayText, setDisplayText] = useState('');
 
     const cameraInstanceRef = useRef<Camera | null>(null);
     const canvasInstanceRef = useRef<Canvas | null>(null);
@@ -15,14 +16,13 @@ export function DetectionPage() {
     const videoElementRef = useRef<HTMLVideoElement | null>(null);
     const cameraSelectElementRef = useRef<HTMLSelectElement | null>(null);
     const canvasElementRef = useRef<HTMLCanvasElement | null>(null);
-    const displayTextElementRef = useRef<HTMLDivElement | null>(null);
 
     const cameraChangeHandlerRef = useRef<((e: Event) => void) | null>(null);
     const videoLoaddedHandlerRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         if (!videoElementRef.current || !cameraSelectElementRef.current || !canvasElementRef.current) {
-            Dialog.showError('Some element not found');
+            Dialog.showError('Some ref not found');
             return;
         }
 
@@ -56,18 +56,15 @@ export function DetectionPage() {
         if (
             !cameraSelectElementRef.current ||
             !videoElementRef.current ||
-            !displayTextElementRef.current ||
             !canvasInstanceRef.current ||
             !mediapipeInstanceRef.current ||
             !cameraInstanceRef.current ||
             !canvasInstanceRef.current
         ) {
-            return Dialog.showError('Some element not found');
+            return Dialog.showError('Some ref not found');
         }
 
         const cameraSelectElement = cameraSelectElementRef.current;
-        const displayTextElement = displayTextElementRef.current;
-
         const cameraInstance = cameraInstanceRef.current;
         const canvasInstance = canvasInstanceRef.current;
         const mediapipeInstance = mediapipeInstanceRef.current;
@@ -75,8 +72,7 @@ export function DetectionPage() {
         if (!isCameraRunning) {
             setIsCameraRunnning(true);
 
-            displayTextElement.classList.remove('hidden');
-            displayTextElement.textContent = '';
+            setDisplayText('');
 
             const permission = await cameraInstance.requestPermission();
             if (permission) {
@@ -107,17 +103,17 @@ export function DetectionPage() {
                 cameraSelectElement.addEventListener('change', cameraChangeHandlerRef.current);
 
                 const aslMetadata = await Model.loadASLMetadata();
-                await cameraInstance.predictionLoop(displayTextElement, handLandmarker, canvasInstance, aslMetadata);
+                await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata);
             }
         } else {
             const confirmation = await Dialog.showConfirmation('Are you sure want to stop camera stream?');
 
             if (confirmation.isConfirmed) {
                 setIsCameraRunnning(false);
+                setDisplayText('');
+                
                 cameraInstance.stop();
                 canvasInstance.clear();
-
-                displayTextElement.classList.add('hidden');
 
                 cameraSelectElement.innerHTML = '';
                 cameraSelectElement.classList.add('hidden');
@@ -150,14 +146,13 @@ export function DetectionPage() {
                         className="w-full mt-4 p-2 border rounded hidden">
                     </select>
 
-                    <div ref={displayTextElementRef} id="display-text" className="mt-4 text-4xl font-bold"></div>
+                    <div className="mt-4 text-4xl font-bold">{displayText}</div>
 
                     <button
                         onClick={cameraButtonHandler}
                         className={` 
                             mt-4 px-4 py-2 font-bold text-white ${isCameraRunning ? 'bg-red-500' : 'bg-blue-500'} border-b-4 border-black
-                            rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
-                            disabled:cursor-not-allowed disabled:opacity-50
+                            rounded cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                         `}>
                         {isCameraRunning ? 'Stop Camera' : 'Start Camera'} <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i>
                     </button>

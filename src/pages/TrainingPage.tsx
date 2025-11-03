@@ -87,6 +87,7 @@ export function TrainingPage() {
             datasetInputElementRef={datasetInputElementRef}
         />,
         <Step2Page
+            isStep2Valid={isStep2Valid}
             setIsStep2Valid={setIsStep2Valid}
             splitData={splitData}
             setSplitData={setSplitData}

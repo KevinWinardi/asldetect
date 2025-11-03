@@ -44,11 +44,18 @@ export function Step5Page({
     const [progressTraining, setProgressTraining] = useState('');
     const [isFirstTraining, setIsFirstTraining] = useState(true);
     const [evalTest, setEvalTest] = useState<{ acc: number, loss: number } | null>(null);
+    const [isModelSaved, setIsModelSaved] = useState(false);
 
     const modelInstanceRef = useRef<Model | null>(null);
     const accTrainCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
     const lossTrainCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
     const chartJSInstanceRef = useRef<ChartJS | null>(null);
+
+    const aslMetadataRef = useRef<{
+        mean: number[],
+        std: number[],
+        label: string[],
+    }>(null);
 
     useEffect(() => {
         modelInstanceRef.current = new Model(
@@ -64,27 +71,71 @@ export function Step5Page({
 
     async function startTrainingHandler() {
         try {
-            if (!modelInstanceRef.current) {
+            if (!modelInstanceRef.current || !chartJSInstanceRef.current) {
                 return Dialog.showError('Model instance not found');
             }
 
+            setIsModelSaved(false);
             setIsTraining(true);
-            setIsFirstTraining(false);
-
-            const { evaluationModel, evaluationTest } = await modelInstanceRef.current.startTrain();
+            const { evaluationModel, evaluationTest, mean, std, label } = await modelInstanceRef.current.startTrain();
             setIsTraining(false);
-            setEvalTest({ loss: evaluationTest.loss, acc: evaluationTest.acc });
 
-            if (!chartJSInstanceRef.current) {
-                return;
-            }
+            setEvalTest({ loss: evaluationTest.loss, acc: evaluationTest.acc });
+            aslMetadataRef.current = {
+                mean: mean,
+                std: std,
+                label: label,
+            };
+
             chartJSInstanceRef.current.createEvalChart(accTrainCanvasElementRef.current, 'acc', evaluationModel);
             chartJSInstanceRef.current.createEvalChart(lossTrainCanvasElementRef.current, 'loss', evaluationModel);
+
+            setIsFirstTraining(false);
+        } catch (error: any) {
+            return Dialog.showError(error.message);
+        } finally {
+            setIsTraining(false);
+        }
+    }
+
+    async function saveModelHandler(): Promise<void> {
+        try {
+            if (!aslMetadataRef.current || !modelInstanceRef.current || !evalTest) {
+                throw new Error('Some ref not found');
+            }
+            const name = await Dialog.showInput({
+                title: 'Model name',
+                inputLabel: 'Input your model name',
+                inputPlaceholder: 'Your model name',
+                input: 'text',
+                inputValidator: (value) => {
+                    const localStorageKeys = Object.keys(localStorage);
+
+                    if (localStorageKeys.includes(value.split(' ').join('_'))) {
+                        return 'This name already used, please use another name';
+                    } else {
+                        setIsModelSaved(true);
+                        return;
+                    }
+                }
+            })
+            if (!name) {
+                return;
+            }
+
+            modelInstanceRef.current.saveModelHandler(
+                name,
+                {
+                    mean: aslMetadataRef.current.mean,
+                    std: aslMetadataRef.current.std,
+                    label: aslMetadataRef.current.label,
+                },
+                evalTest.acc,
+                evalTest.loss,
+            )
         } catch (error: any) {
             Dialog.showError(error.message);
             return;
-        } finally {
-            setIsTraining(false);
         }
     }
 
@@ -169,20 +220,32 @@ export function Step5Page({
                         }
                     </div>
                 </div>
-            </section >
+            </section>
 
-            <section className="mt-2">
-                <button
-                    disabled={!Object.values(isStep5Valid).every(item => item === true)}
-                    onClick={startTrainingHandler}
-                    className={`${isTraining && 'hidden'}
-                            block mx-auto
+            <section className="mt-4">
+                <div className="flex gap-4 justify-center items-center">
+                    <button
+                        disabled={!Object.values(isStep5Valid).every(item => item === true)}
+                        onClick={startTrainingHandler}
+                        className={`${isTraining && 'hidden'}
                             px-4 py-2 font-bold text-white bg-blue-500 border-b-4 border-black
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                    {isFirstTraining ? 'Start' : 'Retrain'} <i className={`fa-solid ${isFirstTraining ? 'fa-play' : 'fa-rotate'}`}></i>
-                </button>
+                        {isFirstTraining ? 'Start' : 'Retrain'} <i className={`fa-solid ${isFirstTraining ? 'fa-play' : 'fa-rotate'}`}></i>
+                    </button>
+
+                    <button
+                        disabled={isModelSaved}
+                        onClick={saveModelHandler}
+                        className={`${(isFirstTraining || isTraining) ? 'hidden' : 'block'}
+                            px-4 py-2 font-bold text-white ${isModelSaved ? 'bg-green-500' : 'bg-orange-500'} border-b-4 border-black
+                            rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
+                            disabled:cursor-not-allowed disabled:opacity-50
+                        `}>
+                        {isModelSaved ? 'Saved' : 'Save Model'} <i className={`fa-solid ${isModelSaved ? 'fa-check' : 'fa-save'}`}></i>
+                    </button>
+                </div>
 
                 <div className={`${isTraining ? 'block' : 'hidden'} mt-2 mx-auto w-max p-2 border rounded-md shadow-lg`}>
                     <div className="flex justify-center items-center'">
@@ -192,11 +255,11 @@ export function Step5Page({
                 </div>
             </section >
 
-            <section className={`${isFirstTraining || isTraining ? 'hidden' : 'block'} w-full mt-4`}>
+            <section className={`${isFirstTraining || isTraining ? 'hidden' : 'block'} w-full mt-8`}>
                 <canvas ref={accTrainCanvasElementRef} className="mb-4"></canvas>
                 <canvas ref={lossTrainCanvasElementRef}></canvas>
 
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-4 grid grid-cols-2 gap-2">
                     <p className="p-2 text-green-500 border rounded shadow">Acc Test: {evalTest?.acc.toFixed(4)}</p>
                     <p className="p-2 text-red-500 border rounded shadow">Loss Test: {evalTest?.loss.toFixed(4)}</p>
                 </div>

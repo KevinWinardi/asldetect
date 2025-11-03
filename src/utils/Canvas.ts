@@ -47,7 +47,7 @@ export class Canvas {
     clear() {
         try {
             if (!this.canvasElement || !this.ctx) {
-                throw new Error('Some element not found');
+                throw new Error('Some ref not found');
             }
 
             this.ctx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);

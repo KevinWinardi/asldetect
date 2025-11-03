@@ -12,7 +12,6 @@ export function DatasetPage() {
     const downloadButtonElementRef = useRef<HTMLButtonElement | null>(null);
     const canvasElementRef = useRef<HTMLCanvasElement | null>(null);
     const dataPerLabelInputElementRef = useRef<HTMLInputElement | null>(null);
-    const displayTextElementRef = useRef<HTMLDivElement | null>(null);
 
     const cameraInstanceRef = useRef<Camera | null>(null);
     const canvasInstanceRef = useRef<Canvas | null>(null);
@@ -25,6 +24,7 @@ export function DatasetPage() {
 
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [dataPerLabelInput, setDataPerLabelInput] = useState<string | number>('');
+    const [displayText, setDisplayText] = useState('');
 
     useEffect(() => {
         if (!videoElementRef.current || !cameraSelectElementRef.current || !canvasElementRef.current) {
@@ -77,7 +77,6 @@ export function DatasetPage() {
             !videoElementRef.current ||
             !dataPerLabelInputElementRef.current ||
             !nextLetterButtonElementRef.current ||
-            !displayTextElementRef.current ||
             !downloadButtonElementRef.current ||
             !canvasInstanceRef.current ||
             !mediapipeInstanceRef.current ||
@@ -91,7 +90,6 @@ export function DatasetPage() {
         const dataPerLabelInputElement = dataPerLabelInputElementRef.current;
         const nextLetterButtonElement = nextLetterButtonElementRef.current;
         const cameraSelectElement = cameraSelectElementRef.current;
-        const displayTextElement = displayTextElementRef.current;
         const downloadButtonElement = downloadButtonElementRef.current;
 
         const cameraInstance = cameraInstanceRef.current;
@@ -156,14 +154,14 @@ export function DatasetPage() {
                     await cameraInstance.generateDatasetLoop(
                         letters[currentLetterIndex],
                         parseInt(dataPerLabelInputElement.value.trim()),
-                        displayTextElementRef.current,
+                        setDisplayText,
                         handLandmarker,
                         canvasInstance,
                         datasetInstance,
                     );
 
                     if (currentLetterIndex >= letters.length - 1) {
-                        displayTextElement.textContent = 'Finish generate dataset ✅';
+                        setDisplayText('Finish generate dataset ✅');
                         nextLetterButtonElement.classList.add('hidden');
                         downloadButtonElement.classList.remove('hidden');
                         return;
@@ -172,8 +170,7 @@ export function DatasetPage() {
                 };
 
                 nextLetterButtonElement.classList.remove('hidden');
-                displayTextElement.classList.remove('hidden');
-                displayTextElement.textContent = `${letters[currentLetterIndex]}: 0 data`;
+                setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
                 await callGenerateDatasetLoop();
 
                 // Next letter event handler
@@ -182,7 +179,7 @@ export function DatasetPage() {
                 }
                 const nextLetterHandlerTemp = async () => {
                     ++currentLetterIndex;
-                    displayTextElement.textContent = `${letters[currentLetterIndex]}: 0 data`;
+                    setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
                     await callGenerateDatasetLoop();
                 }
                 nextLetterHandlerRef.current = nextLetterHandlerTemp;
@@ -194,10 +191,11 @@ export function DatasetPage() {
 
             if (confirmation.isConfirmed) {
                 setIsCameraRunnning(false);
+                setDisplayText('');
+                
                 cameraInstance.stop();
                 canvasInstance.clear();
 
-                displayTextElement.classList.add('hidden');
                 nextLetterButtonElement.classList.add('hidden');
                 downloadButtonElement.classList.add('hidden');
 
@@ -246,7 +244,7 @@ export function DatasetPage() {
                     <select ref={cameraSelectElementRef} name="camera-select"
                         className="w-full mt-4 p-2 border rounded hidden"></select>
 
-                    <div ref={displayTextElementRef} id="display-text" className="mt-4 text-4xl font-bold"></div>
+                    <div className="mt-4 text-4xl font-bold">{displayText}</div>
 
                     <button
                         ref={nextLetterButtonElementRef}
@@ -260,7 +258,11 @@ export function DatasetPage() {
                     <button
                         ref={downloadButtonElementRef}
                         onClick={downloadButtonHandler}
-                        className="hidden mt-4 p-2 w-full font-semb text-white bg-orange-500 rounded cursor-pointer transition hover:opacity-75 hover:scale-95"
+                        className={` 
+                            hidden mt-4 px-4 py-2 font-bold text-white bg-orange-500 border-b-4 border-black
+                            rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
+                            disabled:cursor-not-allowed disabled:opacity-50
+                        `}
                     >
                         <i className="fa-solid fa-download"></i> Download Dataset (.csv)
                     </button>

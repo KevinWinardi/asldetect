@@ -173,7 +173,7 @@ export class Model {
                 yTest,
                 mean,
                 std,
-                // uniqueLabels,
+                uniqueLabels,
             } = await Dataset.preprocessDataset(this.tensorflowDataset, this.splitData);
 
             this.createModel(this.layerModel, this.compileModel);
@@ -201,10 +201,14 @@ export class Model {
             this.setProgressTraining('Evaluating model...');
             await this.evaluateModel(xTest, yTest)
 
-            tf.dispose([xTrain, xVal, xTest, yTrain, yVal, yTest, mean, std]);
+            tf.dispose([xTrain, xVal, xTest, yTrain, yVal, yTest]);
             return {
                 evaluationModel: this.evaluationModel,
-                evaluationTest: this.evaluationTest
+                evaluationTest: this.evaluationTest,
+                model: this.model,
+                mean: Array.from(await mean.data()),
+                std: Array.from(await std.data()),
+                label: uniqueLabels,
             };
         } catch (error: any) {
             throw new Error(error.message);
@@ -227,7 +231,7 @@ export class Model {
         aslMetadata: {
             mean: tf.Tensor1D,
             std: tf.Tensor1D,
-            labels: [],
+            label: [],
         },
         loadModel: tf.LayersModel,
     ) {
@@ -256,7 +260,7 @@ export class Model {
             const maxIndex = predictionData.indexOf(maxProb);
 
             if (maxProb > 0.7) {
-                const predictedLabel = aslMetadata.labels[maxIndex];
+                const predictedLabel = aslMetadata.label[maxIndex];
                 return predictedLabel;
             } else {
                 return '???';
@@ -272,11 +276,33 @@ export class Model {
         return {
             mean: tf.tensor1d(data.mean),
             std: tf.tensor1d(data.std),
-            labels: data.labels,
+            label: data.label,
         };
     }
 
-    saveModel(name: string) {
-        this.model.save(`localstorage://${name}`);
+    saveModelHandler(
+        name: string,
+        aslMetadata: { mean: number[], std: number[], label: string[] },
+        accTest: number,
+        lossTest: number,
+    ): void {
+        try {
+            const keyModel = name.toLowerCase().split(' ').join('_');
+            const metadataModelJSON = JSON.stringify({
+                name: name,
+                createdAt: new Date(),
+                mean: aslMetadata.mean,
+                std: aslMetadata.std,
+                label: aslMetadata.label,
+                accTest: accTest,
+                lossTest: lossTest,
+            })
+            localStorage.setItem(keyModel, metadataModelJSON);
+
+            this.model.save(`localstorage://${keyModel}`);
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
     }
+
 }

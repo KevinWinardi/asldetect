@@ -4,6 +4,8 @@ import type { Canvas } from "./Canvas";
 import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
 import { Model } from "./Model";
+import type { SetStateAction } from "react";
+import type React from "react";
 
 export class Camera {
     cameraSelectElement: HTMLSelectElement | null;
@@ -104,8 +106,7 @@ export class Camera {
     async stop(): Promise<void> {
         try {
             if (!this.currentStream || !this.detectionLoopId || !this.videoElement) {
-                console.log(3)
-                throw new Error('Some element stream not found')
+                throw new Error('Some ref stream not found')
             };
 
             cancelAnimationFrame(this.detectionLoopId);
@@ -125,7 +126,7 @@ export class Camera {
     async generateDatasetLoop(
         currentLetter: string,
         dataPerLabel: number,
-        displayTextElement: HTMLDivElement | null,
+        setDisplayText: React.Dispatch<React.SetStateAction<string>>,
         handLandmarker: HandLandmarker | undefined,
         canvasInstance: Canvas | null,
         datasetInstance: Dataset | null
@@ -136,7 +137,7 @@ export class Camera {
             const loop = () => {
                 try {
                     if (!handLandmarker || !canvasInstance || !this.videoElement) {
-                        throw new Error('Some element not found');
+                        throw new Error('Some ref not found');
                     }
 
                     const videoWidth = this.videoElement.videoWidth;
@@ -163,7 +164,7 @@ export class Camera {
                         datasetInstance!.addDataToArray(tempRow);
                         ++currentDataPerLabel;
 
-                        displayTextElement!.textContent = `${currentLetter}: ${currentDataPerLabel} data`;
+                        setDisplayText(`${currentLetter}: ${currentDataPerLabel} data`);
                     }
 
                     if (currentDataPerLabel < dataPerLabel) {
@@ -183,13 +184,13 @@ export class Camera {
     }
 
     async predictionLoop(
-        displayTextElement: HTMLDivElement | null,
+        setDisplayText: React.Dispatch<React.SetStateAction<string>>,
         handLandmarker: HandLandmarker | undefined,
         canvasInstance: Canvas | null,
         aslMetadata: {
             mean: tf.Tensor1D,
             std: tf.Tensor1D,
-            labels: [],
+            label: [],
         },
     ): Promise<void> {
         const loadModel = await tf.loadLayersModel('./asl_model.json');
@@ -197,7 +198,7 @@ export class Camera {
             const loop = () => {
                 try {
                     if (!handLandmarker || !canvasInstance || !this.videoElement) {
-                        throw new Error('Some element not found');
+                        throw new Error('Some ref not found');
                     }
 
                     const videoWidth = this.videoElement.videoWidth;
@@ -216,7 +217,7 @@ export class Camera {
                         for (const landmarks of results.landmarks) {
                             canvasInstance.drawLandmark(landmarks);
                             const predictedLabel = Model.prediction(landmarks, aslMetadata, loadModel);
-                            displayTextElement!.textContent = `${predictedLabel}`;
+                            setDisplayText(predictedLabel);
                         }
                     }
                 } catch (error: any) {

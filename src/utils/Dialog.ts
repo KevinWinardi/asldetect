@@ -1,11 +1,20 @@
 import Swal, { type SweetAlertResult } from "sweetalert2";
 
+const buttonStyle = {
+    confirm: 'w-24 m-4 p-2 text-white bg-blue-500 rounded cursor-pointer border border-b-4 border-b-black transition hover:translate-y-0.5 hover:border-b-transparent hover:opacity-75',
+    cancel: 'w-24 p-2 text-blue-500 bg-transparent rounded cursor-pointer border border-b-4 border-b-black transition hover:translate-y-0.5 hover:border hover:border-b-blue-500 hover:opacity-75',
+};
+
 export class Dialog {
     static async showInformation(message: string): Promise<SweetAlertResult<any>> {
         return await Swal.fire({
             title: 'Information',
             text: message,
             icon: 'info',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: buttonStyle.confirm,
+            }
         });
     }
 
@@ -14,7 +23,14 @@ export class Dialog {
             title: 'Confirmation',
             text: message,
             icon: 'question',
+            confirmButtonText: 'Yes',
             showCancelButton: true,
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: buttonStyle.confirm,
+                cancelButton: buttonStyle.cancel,
+            }
         });
     }
 
@@ -23,6 +39,10 @@ export class Dialog {
             title: 'Warning',
             text: message,
             icon: 'warning',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: buttonStyle.confirm,
+            }
         });
     }
 
@@ -31,6 +51,10 @@ export class Dialog {
             title: 'Error',
             text: message,
             icon: 'error',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'w-24 m-4 p-2 text-white bg-blue-500 rounded cursor-pointer border border-b-4 border-b-black transition hover:translate-y-0.5 hover:border-b-transparent hover:opacity-75',
+            }
         });
     }
 
@@ -46,5 +70,35 @@ export class Dialog {
 
     static hideLoading(): void {
         return Swal.close();
+    }
+
+    static async showInput({
+        title,
+        input,
+        inputLabel,
+        inputPlaceholder,
+        inputValidator
+    }: {
+        title: string,
+        input: 'text',
+        inputLabel: string,
+        inputPlaceholder: string,
+        inputValidator: (value: string) => string | undefined,
+    }) {
+        const { value: name } = await Swal.fire({
+            title: title,
+            input: input,
+            inputLabel: inputLabel,
+            inputPlaceholder: inputPlaceholder,
+            showCancelButton: true,
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: buttonStyle.confirm,
+                cancelButton: buttonStyle.cancel,
+            },
+            inputValidator: inputValidator,
+        });
+        return name;
     }
 }

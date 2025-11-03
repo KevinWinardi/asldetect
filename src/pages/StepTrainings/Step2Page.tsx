@@ -22,10 +22,12 @@ function InformationHelper() {
 }
 
 export function Step2Page({
+    isStep2Valid,
     setIsStep2Valid,
     splitData,
     setSplitData,
 }: {
+    isStep2Valid: boolean,
     setIsStep2Valid: React.Dispatch<React.SetStateAction<boolean>>,
     splitData: SplitDataType,
     setSplitData: React.Dispatch<React.SetStateAction<SplitDataType>>,
@@ -33,27 +35,17 @@ export function Step2Page({
     const trainInputElementRef = useRef<HTMLInputElement | null>(null);
     const valInputElementRef = useRef<HTMLInputElement | null>(null);
     const testInputElementRef = useRef<HTMLInputElement | null>(null);
-    const messageSplitDataElementRef = useRef<HTMLParagraphElement | null>(null);
 
     useEffect(() => {
-        setIsStep2Valid(false);
         const values = [splitData.train, splitData.val, splitData.test].map(Number);
-
-        if (!messageSplitDataElementRef.current) return;
+        const sum = values.reduce((a, b) => a + b, 0);
 
         // Validation
-        if (values.some(v => isNaN(v) || !Number.isInteger(v) || v <= 0)) {
-            messageSplitDataElementRef.current.textContent = 'Each input must be a positive integer';
+        if (values.some(v => isNaN(v) || !Number.isInteger(v) || v <= 0) || sum !== 100) {
+            setIsStep2Valid(false);
             return;
         }
 
-        const sum = values.reduce((a, b) => a + b, 0);
-        if (sum !== 100) {
-            messageSplitDataElementRef.current.textContent = 'Total percentage must be 100%';
-            return;
-        }
-
-        messageSplitDataElementRef.current.textContent = '';
         setIsStep2Valid(true);
     }, [splitData]);
 
@@ -121,10 +113,13 @@ export function Step2Page({
                         </span>
                     </div>
                 </div>
-
             </section>
 
-            <p ref={messageSplitDataElementRef} className="mt-2 text-red-500"></p>
+            {
+                !isStep2Valid && (
+                    <p className="mt-2 text-sm text-red-500">Each input must be positive integer number</p>
+                )
+            }
 
             <div className="mt-4 italic">
                 <p>There are several commonly ratio for split data into train/val/test</p>
