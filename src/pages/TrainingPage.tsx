@@ -118,7 +118,7 @@ export function TrainingPage() {
     ];
 
     return (
-        <>
+        <div className="px-4 sm:px-8 pt-24 pb-8">
             <h1 className="font-bold text-4xl text-center text-yellow-900">Training Model</h1>
 
             <div className="max-w-lg block mx-auto mt-8 p-4 bg-white border rounded shadow-2xl">
@@ -147,6 +147,6 @@ export function TrainingPage() {
                     </button>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

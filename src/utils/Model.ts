@@ -4,6 +4,7 @@ import type { SplitDataType } from '../types/splitDataType';
 import type { CompileType } from '../types/compileType';
 import { Dataset } from './Dataset';
 import type { FitModelType } from '../types/fitModelType';
+import type { HandLandmarker, NormalizedLandmark } from '@mediapipe/tasks-vision';
 
 export class Model {
     model: tf.Sequential;
@@ -176,7 +177,6 @@ export class Model {
             } = await Dataset.preprocessDataset(this.tensorflowDataset, this.splitData);
 
             this.createModel(this.layerModel, this.compileModel);
-            console.log(this.fitModel)
             this.setProgressTraining('Training model...');
             await this.model.fit(xTrain, yTrain, {
                 epochs: this.fitModel.epochs as number,
@@ -220,6 +220,60 @@ export class Model {
         });
 
         this.evaluationTest = { loss, acc };
+    }
+
+    static prediction(
+        landmarks: NormalizedLandmark[],
+        aslMetadata: {
+            mean: tf.Tensor1D,
+            std: tf.Tensor1D,
+            labels: [],
+        },
+        loadModel: tf.LayersModel,
+    ) {
+        const predictedLabel = tf.tidy(() => {
+            const flatInput = landmarks.map(p => [p.x, p.y, p.z]).flat(); // result 63 element
+
+            // Normalisasi menggunakan metadata
+            const inputTensor = tf.tensor1d(flatInput);
+            const standardized = inputTensor
+                .sub(aslMetadata.mean)
+                .div(aslMetadata.std)
+                .reshape([1, -1]); // input [1, 63]
+
+            const prediction = loadModel.predict(standardized); // Tensor [1, 26]
+            let predictionData;
+            if (Array.isArray(prediction)) {
+                // If model outputs multiple tensors
+                predictionData = prediction[0].dataSync();
+                // Use prediction[0] (the main output)
+            } else {
+                // If single output tensor
+                predictionData = prediction.dataSync();
+            }
+
+            const maxProb = Math.max(...predictionData);
+            const maxIndex = predictionData.indexOf(maxProb);
+
+            if (maxProb > 0.7) {
+                const predictedLabel = aslMetadata.labels[maxIndex];
+                return predictedLabel;
+            } else {
+                return '???';
+            }
+        });
+        return predictedLabel;
+    }
+
+    static async loadASLMetadata() {
+        const res = await fetch('asl_metadata.json');
+        const data = await res.json();
+
+        return {
+            mean: tf.tensor1d(data.mean),
+            std: tf.tensor1d(data.std),
+            labels: data.labels,
+        };
     }
 
     saveModel(name: string) {

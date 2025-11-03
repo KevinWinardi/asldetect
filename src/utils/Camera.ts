@@ -2,6 +2,8 @@ import type { HandLandmarker } from "@mediapipe/tasks-vision";
 import { Dialog } from "./Dialog";
 import type { Canvas } from "./Canvas";
 import type { Dataset } from "./Dataset";
+import * as tf from '@tensorflow/tfjs';
+import { Model } from "./Model";
 
 export class Camera {
     cameraSelectElement: HTMLSelectElement | null;
@@ -102,6 +104,7 @@ export class Camera {
     async stop(): Promise<void> {
         try {
             if (!this.currentStream || !this.detectionLoopId || !this.videoElement) {
+                console.log(3)
                 throw new Error('Some element stream not found')
             };
 
@@ -117,10 +120,6 @@ export class Camera {
         } catch (error: any) {
             Dialog.showError(error.message);
         }
-    }
-
-    async predictionLoop() {
-
     }
 
     async generateDatasetLoop(
@@ -179,6 +178,53 @@ export class Camera {
                 }
             }
 
+            loop();
+        });
+    }
+
+    async predictionLoop(
+        displayTextElement: HTMLDivElement | null,
+        handLandmarker: HandLandmarker | undefined,
+        canvasInstance: Canvas | null,
+        aslMetadata: {
+            mean: tf.Tensor1D,
+            std: tf.Tensor1D,
+            labels: [],
+        },
+    ): Promise<void> {
+        const loadModel = await tf.loadLayersModel('./asl_model.json');
+        return new Promise((resolve, reject) => {
+            const loop = () => {
+                try {
+                    if (!handLandmarker || !canvasInstance || !this.videoElement) {
+                        throw new Error('Some element not found');
+                    }
+
+                    const videoWidth = this.videoElement.videoWidth;
+                    const videoHeight = this.videoElement.videoHeight;
+
+                    if (videoWidth === 0 || videoHeight === 0) {
+                        this.detectionLoopId = requestAnimationFrame(loop);
+                        return;
+                    }
+
+                    const startTimeMs = performance.now();
+                    const results = handLandmarker.detectForVideo(this.videoElement, startTimeMs);
+                    canvasInstance.clear();
+
+                    if (results.landmarks.length != 0) {
+                        for (const landmarks of results.landmarks) {
+                            canvasInstance.drawLandmark(landmarks);
+                            const predictedLabel = Model.prediction(landmarks, aslMetadata, loadModel);
+                            displayTextElement!.textContent = `${predictedLabel}`;
+                        }
+                    }
+                } catch (error: any) {
+                    Dialog.showError(error.message);
+                    reject(error);
+                }
+                this.detectionLoopId = requestAnimationFrame(loop);
+            }
             loop();
         });
     }

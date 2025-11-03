@@ -11,7 +11,7 @@ export function App() {
         <>
             <Header></Header>
 
-            <main className="min-h-dvh max-w-7xl block mx-auto px-4 sm:px-8 pt-24 pb-8 bg-gray-100">
+            <main className="min-h-dvh max-w-7xl block mx-auto bg-gray-100">
                 <Routes>
                     <Route path="/" element={<HomePage />}></Route>
                     <Route path="/detection" element={<DetectionPage />}></Route>

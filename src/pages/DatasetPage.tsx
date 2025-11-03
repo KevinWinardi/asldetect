@@ -208,7 +208,7 @@ export function DatasetPage() {
     }
 
     return (
-        <>
+        <div className="px-4 sm:px-8 pt-24 pb-8">
             <h1 className="font-bold text-4xl text-center text-yellow-900">Generate Dataset</h1>
 
             <div className="mt-8 mx-auto p-4 flex flex-col gap-4 w-full max-w-md bg-white border rounded shadow-2xl">
@@ -250,9 +250,9 @@ export function DatasetPage() {
 
                     <button
                         ref={nextLetterButtonElementRef}
-                        className="hidden mt-4 p-2 w-full font-semb text-white bg-green-500 rounded 
-                        transition cursor-pointer not-disabled:hover:opacity-75 not-disabled:hover:scale-95
-                        disabled:cursor-not-allowed disabled:text-green-500 disabled:bg-white disabled:border disabled:border-green-500"
+                        className="hidden w-max mt-4 p-2 font-bold text-white bg-green-500 not-disabled:border-b-4 not-disabled:border-black 
+                            rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
+                            disabled:cursor-not-allowed disabled:text-green-500 disabled:bg-white disabled:border disabled:border-green-500"
                     >
                         Next Letter <i className="fa-solid fa-arrow-right"></i>
                     </button>
@@ -276,6 +276,6 @@ export function DatasetPage() {
                     </button>
                 </section>
             </div>
-        </>
+        </div>
     );
 }
