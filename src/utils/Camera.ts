@@ -5,6 +5,7 @@ import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
 import { Model } from "./Model";
 import type React from "react";
+import { Predictor } from "./Predictor";
 
 export class Camera {
     cameraSelectElement: HTMLSelectElement | null;
@@ -156,8 +157,10 @@ export class Camera {
                         for (const landmarks of results.landmarks) {
                             if (landmarks.every(item => item != null)) {
                                 canvasInstance.drawLandmark(landmarks);
-                                for (const landmark of landmarks) {
-                                    tempRow.push(landmark.x, landmark.y, landmark.z);
+                                if(landmarks.some(value=>value!=undefined)){
+                                    for (const landmark of landmarks) {
+                                        tempRow.push(landmark.x, landmark.y, landmark.z);
+                                    }
                                 }
                             }
                         }
@@ -217,7 +220,7 @@ export class Camera {
                     if (results.landmarks.length != 0) {
                         for (const landmarks of results.landmarks) {
                             canvasInstance.drawLandmark(landmarks);
-                            const predictedLabel = Model.prediction(landmarks, aslMetadata, loadModel);
+                            const predictedLabel = Predictor.predict(landmarks, aslMetadata, loadModel);
                             setDisplayText(predictedLabel);
                         }
                     }

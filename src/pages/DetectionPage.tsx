@@ -3,7 +3,7 @@ import { Camera } from "../utils/Camera";
 import { Canvas } from "../utils/Canvas";
 import { Mediapipe } from "../utils/Mediapipe";
 import { Dialog } from "../utils/Dialog";
-import { Model } from "../utils/Model";
+import { BaseModel } from "../utils/BaseModel";
 
 export function DetectionPage() {
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
@@ -102,7 +102,7 @@ export function DetectionPage() {
                 cameraChangeHandlerRef.current = cameraChangeHandlerTemp;
                 cameraSelectElement.addEventListener('change', cameraChangeHandlerRef.current);
 
-                const aslMetadata = await Model.loadASLMetadata();
+                const aslMetadata = await BaseModel.loadASLMetadata('model');
                 await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata);
             }
         } else {

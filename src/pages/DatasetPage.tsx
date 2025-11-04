@@ -24,6 +24,7 @@ export function DatasetPage() {
 
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [dataPerLabelInput, setDataPerLabelInput] = useState<string | number>('');
+    const [isValidDataPerLabel, setIsValidDataPerLabel] = useState<boolean | null>(null);
     const [displayText, setDisplayText] = useState('');
 
     useEffect(() => {
@@ -103,7 +104,6 @@ export function DatasetPage() {
             parsedValue < 10
         ) {
             dataPerLabelInputElementRef.current.focus();
-            return Dialog.showWarning('Data per label must be a positive integer with minimum 10');
         }
 
         if (!isCameraRunning) {
@@ -212,12 +212,31 @@ export function DatasetPage() {
                 <label htmlFor="data-per-label">Total data per label: <span className="text-red-500">*</span></label>
                 <div className="flex flex-col gap-2">
                     <input
-                        disabled={isCameraRunning} ref={dataPerLabelInputElementRef}
+                        disabled={isCameraRunning}
+                        ref={dataPerLabelInputElementRef}
                         value={dataPerLabelInput}
-                        onChange={(e) => setDataPerLabelInput(parseInt(e.target.value))}
-                        type="number" step="1" id="data-per-label" placeholder="500"
+                        onChange={(e) => {
+                            const value = e.target.value.trim();
+                            let validity = true;
+                            const parsedValue = Number(value);
+                            if (isNaN(parsedValue) || !Number.isInteger(parsedValue) || parsedValue < 10) {
+                                validity = false;
+                            }
+                            setDataPerLabelInput(value);
+                            setIsValidDataPerLabel(validity);
+                        }}
+                        type="number"
+                        step={1}
+                        min={10}
+                        max={1000}
+                        id="data-per-label"
+                        placeholder="100"
                         className="border rounded p-2 outline-none transition  focus:border-2 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed" />
-                    <span id="data-per-label-error" className="text-red-500"></span>
+                    {
+                        isValidDataPerLabel === false && (
+                            <span className="text-sm text-red-500">Input must be positive integer number minimum 10</span>
+                        )
+                    }
                 </div>
             </div>
 
@@ -240,8 +259,7 @@ export function DatasetPage() {
                         <canvas ref={canvasElementRef} className="absolute top-0 left-0 block w-full min-h-96"></canvas>
                     </div>
 
-                    <select ref={cameraSelectElementRef} name="camera-select"
-                        className="w-full mt-4 p-2 border rounded hidden"></select>
+                    <select ref={cameraSelectElementRef} name="camera-select" className="w-full mt-4 p-2 border rounded hidden"></select>
 
                     <div className="mt-4 text-4xl font-bold">{displayText}</div>
 
@@ -267,6 +285,7 @@ export function DatasetPage() {
                     </button>
 
                     <button
+                        disabled={!isValidDataPerLabel}
                         onClick={cameraButtonHandler}
                         className={` 
                             mt-4 px-4 py-2 font-bold text-white ${isCameraRunning ? 'bg-red-500' : 'bg-blue-500'} border-b-4 border-black

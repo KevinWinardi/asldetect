@@ -10,7 +10,7 @@ export class ChartJS {
     createEvalChart(
         element: HTMLCanvasElement | null,
         type: 'acc' | 'loss',
-        data: { epoch: number, loss: number, acc: number, val_loss: number, val_acc: number }[]
+        data: { epoch: number, loss: number, acc: number, valLoss: number, valAcc: number }[]
     ) {
         if (!element) {
             throw new Error('Canvas not found');
@@ -30,7 +30,7 @@ export class ChartJS {
                 },
                 {
                     label: 'Val Loss',
-                    data: data.map(row => row.val_loss),
+                    data: data.map(row => row.valLoss),
                     borderColor: '#470000',
                 },
             ]
@@ -43,7 +43,7 @@ export class ChartJS {
                 },
                 {
                     label: 'Val Acc',
-                    data: data.map(row => row.val_acc),
+                    data: data.map(row => row.valAcc),
                     borderColor: '#005601',
                 },
             ];

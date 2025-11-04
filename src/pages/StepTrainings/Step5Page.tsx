@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Model } from "../../utils/Model";
 import * as tf from '@tensorflow/tfjs';
 import type { SplitDataType } from "../../types/splitDataType";
 import type { LayerType } from "../../types/layerType";
@@ -8,6 +7,7 @@ import { Dialog } from "../../utils/Dialog";
 import { ChartJS } from "../../utils/ChartJS";
 import { Tooltip } from "../../components/Tooltip";
 import type { FitModelType } from "../../types/fitModelType";
+import { Trainer } from "../../utils/Trainer";
 
 export function Step5Page({
     isStep5Valid,
@@ -46,7 +46,7 @@ export function Step5Page({
     const [evalTest, setEvalTest] = useState<{ acc: number, loss: number } | null>(null);
     const [isModelSaved, setIsModelSaved] = useState(false);
 
-    const modelInstanceRef = useRef<Model | null>(null);
+    const trainerInstanceRef = useRef<Trainer | null>(null);
     const accTrainCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
     const lossTrainCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
     const chartJSInstanceRef = useRef<ChartJS | null>(null);
@@ -58,26 +58,25 @@ export function Step5Page({
     }>(null);
 
     useEffect(() => {
-        modelInstanceRef.current = new Model(
-            tensorflowDataset,
-            splitData,
-            layerModel,
-            compileModel,
-            fitModel,
-            setProgressTraining,
-        );
+        trainerInstanceRef.current = new Trainer(setProgressTraining);
         chartJSInstanceRef.current = new ChartJS();
     }, []);
 
     async function startTrainingHandler() {
         try {
-            if (!modelInstanceRef.current || !chartJSInstanceRef.current) {
+            if (!trainerInstanceRef.current || !chartJSInstanceRef.current) {
                 return Dialog.showError('Model instance not found');
             }
 
             setIsModelSaved(false);
             setIsTraining(true);
-            const { evaluationTrainVal, evaluationTest, mean, std, label } = await modelInstanceRef.current.startTrain();
+            const { evaluationTrainVal, evaluationTest, mean, std, label } = await trainerInstanceRef.current.startTraining(
+                tensorflowDataset,
+                splitData,
+                layerModel,
+                compileModel,
+                fitModel,
+            );
             setIsTraining(false);
 
             setEvalTest({ loss: evaluationTest.loss, acc: evaluationTest.acc });
@@ -100,7 +99,7 @@ export function Step5Page({
 
     async function saveModelHandler(): Promise<void> {
         try {
-            if (!aslMetadataRef.current || !modelInstanceRef.current || !evalTest) {
+            if (!aslMetadataRef.current || !trainerInstanceRef.current || !evalTest) {
                 throw new Error('Some ref not found');
             }
             const name = await Dialog.showInput({
@@ -123,7 +122,7 @@ export function Step5Page({
                 return;
             }
 
-            modelInstanceRef.current.saveModelHandler(
+            trainerInstanceRef.current.saveModel(
                 name,
                 {
                     mean: aslMetadataRef.current.mean,
