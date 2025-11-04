@@ -4,7 +4,6 @@ import type { Canvas } from "./Canvas";
 import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
 import { Model } from "./Model";
-import type { SetStateAction } from "react";
 import type React from "react";
 
 export class Camera {
@@ -103,10 +102,10 @@ export class Camera {
         }
     }
 
-    async stop(): Promise<void> {
+    stop(): void {
         try {
             if (!this.currentStream || !this.detectionLoopId || !this.videoElement) {
-                throw new Error('Some ref stream not found')
+                throw new Error('Some ref not found')
             };
 
             cancelAnimationFrame(this.detectionLoopId);
@@ -155,9 +154,11 @@ export class Camera {
                     const tempRow = [];
                     if (results.landmarks.length != 0) {
                         for (const landmarks of results.landmarks) {
-                            canvasInstance.drawLandmark(landmarks);
-                            for (const landmark of landmarks) {
-                                tempRow.push(landmark.x, landmark.y, landmark.z);
+                            if (landmarks.every(item => item != null)) {
+                                canvasInstance.drawLandmark(landmarks);
+                                for (const landmark of landmarks) {
+                                    tempRow.push(landmark.x, landmark.y, landmark.z);
+                                }
                             }
                         }
                         tempRow.push(currentLetter);

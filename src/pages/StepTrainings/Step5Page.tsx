@@ -77,7 +77,7 @@ export function Step5Page({
 
             setIsModelSaved(false);
             setIsTraining(true);
-            const { evaluationModel, evaluationTest, mean, std, label } = await modelInstanceRef.current.startTrain();
+            const { evaluationTrainVal, evaluationTest, mean, std, label } = await modelInstanceRef.current.startTrain();
             setIsTraining(false);
 
             setEvalTest({ loss: evaluationTest.loss, acc: evaluationTest.acc });
@@ -87,8 +87,8 @@ export function Step5Page({
                 label: label,
             };
 
-            chartJSInstanceRef.current.createEvalChart(accTrainCanvasElementRef.current, 'acc', evaluationModel);
-            chartJSInstanceRef.current.createEvalChart(lossTrainCanvasElementRef.current, 'loss', evaluationModel);
+            chartJSInstanceRef.current.createEvalChart(accTrainCanvasElementRef.current, 'acc', evaluationTrainVal);
+            chartJSInstanceRef.current.createEvalChart(lossTrainCanvasElementRef.current, 'loss', evaluationTrainVal);
 
             setIsFirstTraining(false);
         } catch (error: any) {
@@ -130,8 +130,6 @@ export function Step5Page({
                     std: aslMetadataRef.current.std,
                     label: aslMetadataRef.current.label,
                 },
-                evalTest.acc,
-                evalTest.loss,
             )
         } catch (error: any) {
             Dialog.showError(error.message);

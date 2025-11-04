@@ -14,7 +14,7 @@ export class Model {
     compileModel: CompileType;
     fitModel: FitModelType;
     setProgressTraining: React.Dispatch<React.SetStateAction<string>>;
-    evaluationModel: {
+    evaluationTrainVal: {
         epoch: number,
         loss: number,
         acc: number,
@@ -41,7 +41,7 @@ export class Model {
         this.compileModel = compileModel;
         this.fitModel = { epochs: fitModel.epochs, batchSize: fitModel.batchSize };
         this.setProgressTraining = setProgressTraining;
-        this.evaluationModel = [];
+        this.evaluationTrainVal = [];
         this.evaluationTest = { loss: 0, acc: 0 };
     }
 
@@ -186,7 +186,7 @@ export class Model {
                     onEpochEnd: (epoch, logs) => {
                         tf.tidy(() => {
                             if (!logs) return;
-                            this.evaluationModel.push({
+                            this.evaluationTrainVal.push({
                                 epoch: epoch + 1,
                                 loss: parseFloat(logs.loss.toFixed(4)),
                                 acc: parseFloat(logs.acc.toFixed(4)),
@@ -201,9 +201,8 @@ export class Model {
             this.setProgressTraining('Evaluating model...');
             await this.evaluateModel(xTest, yTest)
 
-            tf.dispose([xTrain, xVal, xTest, yTrain, yVal, yTest]);
             return {
-                evaluationModel: this.evaluationModel,
+                evaluationTrainVal: this.evaluationTrainVal,
                 evaluationTest: this.evaluationTest,
                 model: this.model,
                 mean: Array.from(await mean.data()),
@@ -212,6 +211,8 @@ export class Model {
             };
         } catch (error: any) {
             throw new Error(error.message);
+        } finally {
+            tf.disposeVariables();
         }
     }
 
@@ -283,8 +284,6 @@ export class Model {
     saveModelHandler(
         name: string,
         aslMetadata: { mean: number[], std: number[], label: string[] },
-        accTest: number,
-        lossTest: number,
     ): void {
         try {
             const keyModel = name.toLowerCase().split(' ').join('_');
@@ -294,8 +293,8 @@ export class Model {
                 mean: aslMetadata.mean,
                 std: aslMetadata.std,
                 label: aslMetadata.label,
-                accTest: accTest,
-                lossTest: lossTest,
+                evaluationTrainVal: this.evaluationTrainVal,
+                evaluationTest: this.evaluationTest,
             })
             localStorage.setItem(keyModel, metadataModelJSON);
 

@@ -28,7 +28,7 @@ export function DatasetPage() {
 
     useEffect(() => {
         if (!videoElementRef.current || !cameraSelectElementRef.current || !canvasElementRef.current) {
-            Dialog.showError('Some element not found');
+            Dialog.showError('Some ref not found');
             return;
         }
 
@@ -47,7 +47,6 @@ export function DatasetPage() {
         datasetInstanceRef.current = new Dataset();
 
         return () => {
-            cameraInstanceRef.current = null;
             canvasInstanceRef.current = null;
             mediapipeInstanceRef.current = null;
             datasetInstanceRef.current = null
@@ -192,7 +191,7 @@ export function DatasetPage() {
             if (confirmation.isConfirmed) {
                 setIsCameraRunnning(false);
                 setDisplayText('');
-                
+
                 cameraInstance.stop();
                 canvasInstance.clear();
 
