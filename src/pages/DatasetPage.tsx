@@ -48,6 +48,8 @@ export function DatasetPage() {
         datasetInstanceRef.current = new Dataset();
 
         return () => {
+            cameraInstanceRef.current?.stop();
+
             canvasInstanceRef.current = null;
             mediapipeInstanceRef.current = null;
             datasetInstanceRef.current = null
@@ -152,7 +154,7 @@ export function DatasetPage() {
 
                     await cameraInstance.generateDatasetLoop(
                         letters[currentLetterIndex],
-                        parseInt(dataPerLabelInputElement.value.trim()),
+                        Number(dataPerLabelInputElement.value.trim()),
                         setDisplayText,
                         handLandmarker,
                         canvasInstance,
@@ -183,8 +185,9 @@ export function DatasetPage() {
                 }
                 nextLetterHandlerRef.current = nextLetterHandlerTemp;
                 nextLetterButtonElement.addEventListener('click', nextLetterHandlerRef.current);
+            } else {
+                setIsCameraRunnning(false);
             }
-
         } else {
             const confirmation = await Dialog.showConfirmation('Are you sure want to stop camera stream?');
 

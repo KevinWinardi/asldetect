@@ -3,7 +3,6 @@ import { Dialog } from "./Dialog";
 import type { Canvas } from "./Canvas";
 import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
-import { Model } from "./Model";
 import type React from "react";
 import { Predictor } from "./Predictor";
 
@@ -105,15 +104,15 @@ export class Camera {
 
     stop(): void {
         try {
-            if (!this.currentStream || !this.detectionLoopId || !this.videoElement) {
-                throw new Error('Some ref not found')
-            };
+            if (this.detectionLoopId) {
+                cancelAnimationFrame(this.detectionLoopId);
+                this.detectionLoopId = null;
+            }
 
-            cancelAnimationFrame(this.detectionLoopId);
-
-            this.videoElement.srcObject = null;
-            this.currentStream.getTracks().forEach(track => track.stop());
-            this.currentStream = null;
+            if (this.currentStream) {
+                this.currentStream.getTracks().forEach(track => track.stop());
+                this.currentStream = null;
+            }
 
             if (this.videoElement) {
                 this.videoElement.srcObject = null;
@@ -157,7 +156,7 @@ export class Camera {
                         for (const landmarks of results.landmarks) {
                             if (landmarks.every(item => item != null)) {
                                 canvasInstance.drawLandmark(landmarks);
-                                if(landmarks.some(value=>value!=undefined)){
+                                if (landmarks.every(lm => lm && lm.x != null && lm.y != null && lm.z != null)) {
                                     for (const landmark of landmarks) {
                                         tempRow.push(landmark.x, landmark.y, landmark.z);
                                     }

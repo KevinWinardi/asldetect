@@ -6,6 +6,18 @@ const buttonStyle = {
 };
 
 export class Dialog {
+    static async showSuccess(message: string): Promise<SweetAlertResult<any>> {
+        return await Swal.fire({
+            title: 'Success',
+            text: message,
+            icon: 'success',
+            showCloseButton: true,
+            position: 'top-end',
+            toast: true,
+            showConfirmButton: false,
+        });
+    }
+
     static async showInformation(message: string): Promise<SweetAlertResult<any>> {
         return await Swal.fire({
             title: 'Information',
@@ -68,7 +80,7 @@ export class Dialog {
         });
     }
 
-    static hideLoading(): void {
+    static closeDialog(): void {
         return Swal.close();
     }
 

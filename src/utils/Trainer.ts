@@ -1,4 +1,4 @@
-import type { CompileType } from '../types/compileType';
+import type { CompileModelType } from '../types/compileModelType';
 import type { FitModelType } from '../types/fitModelType';
 import type { LayerType } from '../types/layerType';
 import type { SplitDataType } from '../types/splitDataType';
@@ -22,7 +22,14 @@ export class Trainer extends BaseModel {
         this.setProgress = setProgress;
     }
 
-    async startTraining(dataset: tf.data.CSVDataset | null, splitData: SplitDataType, layerModel: LayerType[], compileModel: CompileType, fitModel: FitModelType) {
+    async startTraining(
+        dataset: tf.data.CSVDataset | null,
+        splitData: SplitDataType,
+        layerModel: LayerType[],
+        compileModel: CompileModelType,
+        fitModel: FitModelType
+    ) {
+        await tf.setBackend('webgl');
         await tf.ready();
         this.setProgress('Preprocessing data...');
         const { xTrain, xVal, xTest, yTrain, yVal, yTest, mean, std, uniqueLabels } =
@@ -31,13 +38,20 @@ export class Trainer extends BaseModel {
         this.setProgress('Create sequential model...');
         this.createModel(layerModel, compileModel);
 
-        this.setProgress('Training...');
+        this.setProgress('Training model...');
+        if (!fitModel.epochs || !fitModel.batchSize) {
+            throw new Error('Epochs and batch size cannot be null');
+        }
+
         await this.model.fit(xTrain, yTrain, {
-            ...fitModel,
+            epochs: fitModel.epochs,
+            batchSize: fitModel.batchSize,
             validationData: [xVal, yVal],
             callbacks: {
                 onEpochEnd: (epoch, logs) => {
                     if (logs) {
+                        this.setProgress(`Training on epoch ${epoch}...`);
+
                         this.evaluationTrainVal.push({
                             epoch: epoch + 1,
                             loss: logs.loss,
@@ -67,6 +81,13 @@ export class Trainer extends BaseModel {
             loss: loss.dataSync()[0],
             acc: acc.dataSync()[0],
         };
+    }
+
+    async stopTraining() {
+        if (this.model) {
+            this.model.stopTraining = true;
+        }
+        tf.engine().disposeVariables();
     }
 
     async saveModel(name: string, metadata: { mean: number[]; std: number[]; label: string[] }) {

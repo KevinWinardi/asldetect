@@ -39,7 +39,7 @@ export class Dataset {
                     return reject(new Error('File CSV not valid'));
                 }
                 const rows = csvContent.split(/\r?\n/);
-                const csvHeader = rows[0].split(',').map(h => h.trim());
+                const csvHeader = rows[0].split(',');
 
                 if (
                     csvHeader.length !== expectedHeader.length ||
@@ -52,7 +52,8 @@ export class Dataset {
                     return reject(new Error('CSV file is not valid, make sure the data is not changed/removed'));
                 }
 
-                for (let i = 1; i < Math.min(rows.length, 10); i++) {
+                // rows.length-1 because file csv after generate create new line on end file
+                for (let i = 1; i < rows.length-1; i++) {
                     const cols = rows[i].split(',');
                     if (cols.length !== expectedHeader.length) {
                         return reject(new Error(`Row ${i + 1} have not valid column count`))
@@ -80,7 +81,7 @@ export class Dataset {
     }
 
     static async preprocessDataset(tensorflowDataset: tf.data.CSVDataset | null, splitData: SplitDataType) {
-        if (!tensorflowDataset) {
+        if (!tensorflowDataset || !splitData.train || !splitData.val) {
             throw new Error('Dataset cannot be null');
         }
 
@@ -150,16 +151,15 @@ export class Dataset {
         const yTest = tf.oneHot(tf.tensor1d(yTestArray, 'int32'), uniqueLabels.length).toFloat();
 
         // Standarize
-        const { xTrainNorm, xValNorm, xTestNorm, mean, std } = tf.tidy(() => {
+        const { mean, std } = tf.tidy(() => {
             const { mean, variance } = tf.moments(xTrain, 0);
             const std = tf.sqrt(variance);
-
-            const xTrainNorm = xTrain.sub(mean).div(std);
-            const xValNorm = xVal.sub(mean).div(std);
-            const xTestNorm = xTest.sub(mean).div(std);
-
-            return { xTrainNorm, xValNorm, xTestNorm, mean, std };
+            return { mean, std };
         });
+
+        const xTrainNorm = xTrain.sub(mean).div(std);
+        const xValNorm = xVal.sub(mean).div(std);
+        const xTestNorm = xTest.sub(mean).div(std);
 
         xTrain.dispose();
         xVal.dispose();

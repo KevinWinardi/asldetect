@@ -5,10 +5,11 @@ import { Step2Page } from "./StepTrainings/Step2Page";
 import { Step3Page } from "./StepTrainings/Step3Page";
 import type { LayerType } from "../types/layerType";
 import type { SplitDataType } from "../types/splitDataType";
-import { Model } from "../utils/Model";
 import { Step4Page } from "./StepTrainings/Step4Page";
 import { Step5Page } from "./StepTrainings/Step5Page";
-import type { CompileType } from "../types/compileType";
+import type { CompileModelType } from "../types/compileModelType";
+import { BaseModel } from "../utils/BaseModel";
+import type { FitModelType } from "../types/fitModelType";
 
 export function TrainingPage() {
     const datasetInputElementRef = useRef<HTMLInputElement | null>(null);
@@ -19,56 +20,44 @@ export function TrainingPage() {
     const [isTraining, setIsTraining] = useState(false);
 
     const [splitData, setSplitData] = useState<SplitDataType>({
-        train: 0,
-        val: 0,
-        test: 0,
+        train: null,
+        val: null,
+        test: null,
     });
     const [layerModel, setLayerModel] = useState<LayerType[]>([]);
-    const [compileModel, setCompileModel] = useState<CompileType>({
-        optimizer: 'adam',
-        learningRate: 0.001,
+    const [compileModel, setCompileModel] = useState<CompileModelType>({
+        optimizer: null,
+        learningRate: null,
         loss: 'categoricalCrossentropy',
         metrics: 'accuracy',
     });
-    const [fitModel, setFitModel] = useState<{
-        epochs: number,
-        batchSize: number,
-    }>({
-        epochs: 10,
-        batchSize: 32,
+    const [fitModel, setFitModel] = useState<FitModelType>({
+        epochs: null,
+        batchSize: null,
     })
 
     const [isStep1Valid, setIsStep1Valid] = useState(false);
-    const [isStep2Valid, setIsStep2Valid] = useState(false);
+    const [isStep2Valid, setIsStep2Valid] = useState<boolean | null>(null);
     const [isStep3Valid, setIsStep3Valid] = useState<{
-        [key: string]: boolean,
+        [key: string]: boolean | null,
     }>({});
     const [isStep4Valid, setIsStep4Valid] = useState<{
-        optimizer: boolean,
-        learningRate: boolean,
+        optimizer: boolean | null,
+        learningRate: boolean | null,
     }>({
-        optimizer: true,
-        learningRate: true,
+        optimizer: null,
+        learningRate: null,
     });
     const [isStep5Valid, setIsStep5Valid] = useState<{
-        epochs: boolean,
-        batchSize: boolean,
+        epochs: boolean | null,
+        batchSize: boolean | null,
     }>({
-        epochs: true,
-        batchSize: true,
+        epochs: null,
+        batchSize: null,
     });
 
     useEffect(() => {
-        setLayerModel(Model.initLayer());
-        setCompileModel({
-            optimizer: 'adam',
-            learningRate: 0.001,
-            loss: 'categoricalCrossentropy',
-            metrics: 'accuracy'
-        })
-        return () => {
-
-        }
+        setLayerModel(BaseModel.initLayer());
     }, [])
 
     function isNextButtonDisabled() {

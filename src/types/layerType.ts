@@ -1,31 +1,31 @@
 export type InputLayerType = {
-    id: number,
+    id: string,
     type: 'inputLayer',
     input_shape: number[],
 }
 
 export type DenseLayerType = {
-    id: number,
+    id: string,
     type: 'dense',
-    units: number,
-    activation: 'relu' | 'elu' | 'swish' | 'tanh',
+    units: number | null,
+    activation: 'relu' | 'elu' | 'swish' | 'tanh' | null,
 }
 
 export type BatchNormalizationLayerType = {
-    id: number,
+    id: string,
     type: 'batchNormalization',
-    momentum: number,
-    epsilon: number,
+    momentum: number | null,
+    epsilon: number | null,
 }
 
 export type DropoutLayerType = {
-    id: number,
+    id: string,
     type: 'dropout',
-    rate: number,
+    rate: number | null,
 }
 
 export type OutputLayerType = {
-    id: number,
+    id: string,
     type: 'output',
     units: number,
     activation: 'softmax',

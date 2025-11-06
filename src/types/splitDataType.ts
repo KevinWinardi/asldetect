@@ -1,5 +1,5 @@
 export type SplitDataType = {
-    train: number,
-    val: number,
-    test: number,
+    train: number|null,
+    val: number|null,
+    test: number|null,
 }

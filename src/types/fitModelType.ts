@@ -1,4 +1,4 @@
 export type FitModelType = {
-    epochs: number;
-    batchSize: number;
+    epochs: number|null;
+    batchSize: number|null;
 }

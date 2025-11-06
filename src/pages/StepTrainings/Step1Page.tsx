@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import type { SweetAlertResult } from "sweetalert2";
 import { Dialog } from "../../utils/Dialog";
@@ -17,6 +17,9 @@ export function Step1Page({
     tensorflowfDatasetRef: React.RefObject<tf.data.CSVDataset | null>
     datasetInputElementRef: React.RefObject<HTMLInputElement | null>
 }) {
+    const [previewData, setPreviewData] = useState<string[][]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+
     async function uploadDataset(e: ChangeEvent<HTMLInputElement>): Promise<void | SweetAlertResult<any>> {
         try {
             const target = e.target as HTMLInputElement;
@@ -30,46 +33,89 @@ export function Step1Page({
             const file = target.files[0];
             const dataset = new Dataset();
 
-            Dialog.showLoading();
+            setIsUploading(true);
             const isValid = await dataset.checkValidityDataset(file);
             if (isValid) {
                 const urlObject = URL.createObjectURL(file);
                 const data = dataset.loadDataset(urlObject);
                 tensorflowfDatasetRef.current = data;
 
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const text = e.target?.result as string;
+                    const rows = text.split(/\r?\n/).slice(0, 11);
+                    const parsed = rows.map(r => r.split(','));
+                    setPreviewData(parsed);
+                }
+                reader.readAsText(file);
+
                 setIsStep1Valid(true);
-                Dialog.hideLoading();
+                setIsUploading(false);
             }
         } catch (error: any) {
-            Dialog.hideLoading();
+            Dialog.closeDialog();
             return Dialog.showError(error.message);
         }
     }
 
     return (
         <>
-            <h2 className="font-bold text-2xl text-left text-gray-700">1. Upload your dataset file</h2>
+            <h2 className="font-bold text-2xl text-gray-700">1. Upload your dataset file</h2>
 
-            <div className={`relative flex justify-center items-center w-full min-h-48 mt-4 border-2 border-dashed transition duration-500 
+            <section>
+                <div className={`relative flex justify-center items-center w-full min-h-48 mt-4 border-2 border-dashed transition duration-500 
                 ${isStep1Valid ? 'border-green-500' : 'border-gray-500'} rounded hover:border-green-500 hover:border-4 hover:bg-green-100`}>
-                <label htmlFor="dataset-input" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+                    <label htmlFor="dataset-input" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
                     w-full h-full flex flex-col justify-center items-center gap-4 
                     font-semibold text-gray-500 cursor-pointer transition-opacity hover:opacity-50">
-                    <i className={`fa-solid ${isStep1Valid ? 'fa-rotate' : 'fa-upload'} text-4xl`}></i>
-                    {isStep1Valid ? 'Data successfully loadded ✅' : 'Upload your (.csv) file'}
-                </label>
-                <input
-                    onChange={(e) => uploadDataset(e)}
-                    ref={datasetInputElementRef}
-                    id="dataset-input"
-                    type="file"
-                    accept=".csv"
-                    className="hidden" />
-            </div>
+                        <i className={`fa-solid ${isStep1Valid ? 'fa-rotate' : 'fa-upload'} text-4xl`}></i>
+                        {isStep1Valid ? 'Data successfully loadded ✅' : 'Upload your dataset file file'}
+                    </label>
+                    <input
+                        onChange={(e) => uploadDataset(e)}
+                        ref={datasetInputElementRef}
+                        id="dataset-input"
+                        type="file"
+                        accept=".csv"
+                        className="hidden" />
+                </div>
+                <span className="mt-2 text-sm italic opacity-75">
+                    Don't have dataset? <Link to='/dataset' className="font-semibold text-blue-500 underline transition-opacity hover:opacity-75">Click here</Link>
+                </span>
 
-            <div className="mt-2 text-sm italic opacity-75">
-                Don't have dataset? <Link to='/dataset' className="font-semibold text-blue-500 underline transition-opacity hover:opacity-75">Click here</Link>
-            </div>
+                <div className={`${isUploading ? 'block' : 'hidden'} mt-2 mx-auto w-max p-2 border rounded-md shadow-lg`}>
+                    <div className="flex justify-center items-center'">
+                        <div className="w-[30px] aspect-square rounded-full border-4 border-blue-500 border-r-gray-500 animate-spin"></div>
+                        <span className="ml-2 line-clamp-1 text-ellipsis">Uploading dataset...</span>
+                    </div>
+                </div>
+            </section>
+
+            {previewData.length > 0 && (
+                <section className="mt-4 p-2 rounded">
+                    <h3 className="font-semibold text-xl text-gray-700">Preview Data</h3>
+
+                    <div className="overflow-auto mt-2">
+                        <table className="table-auto w-full border-collapse border border-gray-300 rounded">
+                            <tbody>
+                                {previewData.map((row, rowIndex) => (
+                                    <tr key={rowIndex} className={rowIndex === 0 ? 'font-bold text-white text-center bg-gray-700' : ''}>
+                                        {row.map((cell, cellIndex) => (
+                                            <td key={cellIndex} className={`border px-2 py-1 ${cellIndex === row.length - 1 && 'text-center'}`}>
+                                                {rowIndex !== 0 && cellIndex !== row.length - 1
+                                                    ? parseFloat(cell).toFixed(5) + '...'
+                                                    : cell
+                                                }
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
+
         </>
     );
 }

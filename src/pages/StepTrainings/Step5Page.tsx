@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as tf from '@tensorflow/tfjs';
 import type { SplitDataType } from "../../types/splitDataType";
 import type { LayerType } from "../../types/layerType";
-import type { CompileType } from "../../types/compileType";
+import type { CompileModelType } from "../../types/compileModelType";
 import { Dialog } from "../../utils/Dialog";
 import { ChartJS } from "../../utils/ChartJS";
 import { Tooltip } from "../../components/Tooltip";
@@ -22,26 +22,26 @@ export function Step5Page({
     setIsTraining,
 }: {
     isStep5Valid: {
-        epochs: boolean,
-        batchSize: boolean,
+        epochs: boolean | null,
+        batchSize: boolean | null,
     },
     setIsStep5Valid: React.Dispatch<React.SetStateAction<{
-        epochs: boolean,
-        batchSize: boolean,
+        epochs: boolean | null,
+        batchSize: boolean | null,
     }>>,
     fitModel: FitModelType,
     setFitModel: React.Dispatch<React.SetStateAction<{
-        epochs: number;
-        batchSize: number;
+        epochs: number | null;
+        batchSize: number | null;
     }>>,
     tensorflowDataset: tf.data.CSVDataset | null,
     splitData: SplitDataType,
     layerModel: LayerType[],
-    compileModel: CompileType,
+    compileModel: CompileModelType,
     isTraining: boolean,
     setIsTraining: React.Dispatch<React.SetStateAction<boolean>>,
 }) {
-    const [progressTraining, setProgressTraining] = useState('');
+    const [progress, setProgress] = useState('');
     const [isFirstTraining, setIsFirstTraining] = useState(true);
     const [evalTest, setEvalTest] = useState<{ acc: number, loss: number } | null>(null);
     const [isModelSaved, setIsModelSaved] = useState(false);
@@ -58,8 +58,14 @@ export function Step5Page({
     }>(null);
 
     useEffect(() => {
-        trainerInstanceRef.current = new Trainer(setProgressTraining);
+        trainerInstanceRef.current = new Trainer(setProgress);
         chartJSInstanceRef.current = new ChartJS();
+
+        return (() => {
+            if (trainerInstanceRef.current && isTraining) {
+                trainerInstanceRef.current.stopTraining();
+            }
+        })
     }, []);
 
     async function startTrainingHandler() {
@@ -68,6 +74,7 @@ export function Step5Page({
                 return Dialog.showError('Model instance not found');
             }
 
+            Dialog.closeDialog();
             setIsModelSaved(false);
             setIsTraining(true);
             const { evaluationTrainVal, evaluationTest, mean, std, label } = await trainerInstanceRef.current.startTraining(
@@ -118,9 +125,12 @@ export function Step5Page({
                     }
                 }
             })
+
             if (!name) {
                 return;
             }
+
+            Dialog.showSuccess('Model saved to local storage');
 
             trainerInstanceRef.current.saveModel(
                 name,
@@ -140,10 +150,12 @@ export function Step5Page({
         <>
             <h2 className="font-bold text-2xl text-left text-gray-700">5. Start training</h2>
 
-            <section className="mt-2">
-                <p>Model ready to get training. Click button bellow to start.</p>
+            <section className="mt-4">
+                <p>Last step is set up configuration for fit model.</p>
+            </section>
 
-                <div className="flex mt-4">
+            <section className="mt-4">
+                <div className="flex">
                     <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">
                         Fit
                     </p>
@@ -157,28 +169,32 @@ export function Step5Page({
                                 epochs
                             </label>
                             <input
-                                value={fitModel.epochs}
+                                value={fitModel.epochs ?? ''}
                                 onChange={(e) => {
-                                    const target = e.target.value;
-                                    let validity = true;
-
-                                    if (!Number.isInteger(Number(target)) || parseInt(target) <= 0 || parseInt(target) > 100) {
-                                        validity = false;
+                                    const value = e.target.value.trim();
+                                    if (value === '') {
+                                        setIsStep5Valid(prev => ({ ...prev, epochs: false }));
+                                        setFitModel(prev => ({ ...prev, epochs: null }));
+                                        return;
                                     }
 
+                                    const parsedValue = Number(value);
+                                    let validity = true;
+                                    if (isNaN(parsedValue) || !Number.isInteger(parsedValue) || parsedValue <= 0) {
+                                        validity = false;
+                                    }
                                     setIsStep5Valid(prev => ({ ...prev, epochs: validity }));
-                                    setFitModel(prev => ({ ...prev, epochs: parseInt(target) }));
+                                    setFitModel(prev => ({ ...prev, epochs: parsedValue }));
                                 }}
                                 id={`epochs`}
                                 type="number"
                                 min={1}
-                                max={100}
                                 className="w-full p-2 border rounded-se rounded-ee" />
-                            <Tooltip text="An epoch is one complete pass of the entire training dataset through the model during training" />
+                            <Tooltip text="An epoch is one complete pass of the entire training dataset through the model during training (e.g. 10)" />
                         </div>
                         {
-                            !isStep5Valid.epochs && (
-                                <p className="text-red-500 text-sm">Input must be positive integer number</p>
+                            isStep5Valid.epochs === false && (
+                                <p className="text-red-500 text-sm">Input must be positive integer number (e.g. 10)</p>
                             )
                         }
                     </div>
@@ -191,31 +207,57 @@ export function Step5Page({
                                 batchSize
                             </label>
                             <input
-                                value={fitModel.batchSize}
+                                value={fitModel.batchSize ?? ''}
                                 onChange={(e) => {
-                                    const target = e.target.value;
-                                    let validity = true;
-
-                                    if (!Number.isInteger(Number(target)) || parseInt(target) <= 0 || parseInt(target) > 100) {
-                                        validity = false;
+                                    const value = e.target.value.trim();
+                                    if (value === '') {
+                                        setIsStep5Valid(prev => ({ ...prev, batchSize: false }));
+                                        setFitModel(prev => ({ ...prev, batchSize: null }));
+                                        return;
                                     }
 
+                                    const parsedValue = Number(value);
+                                    let validity = true;
+                                    if (isNaN(parsedValue) || !Number.isInteger(parsedValue) || parsedValue <= 0) {
+                                        validity = false;
+                                    }
                                     setIsStep5Valid(prev => ({ ...prev, batchSize: validity }));
-                                    setFitModel(prev => ({ ...prev, batchSize: parseInt(target) }));
+                                    setFitModel(prev => ({ ...prev, batchSize: parsedValue }));
                                 }}
                                 id={`batch-size`}
                                 type="number"
                                 min={1}
-                                max={100}
                                 className="w-full p-2 border rounded-se rounded-ee" />
-                            <Tooltip text="Batch size is the number of training samples the model processes before updating its weights once during training" />
+                            <Tooltip text="Batch size is the number of training samples the model processes before updating its weights once during training (e.g. 32)" />
                         </div>
                         {
-                            !isStep5Valid.batchSize && (
-                                <p className="text-red-500 text-sm">Input must be positive integer number</p>
+                            isStep5Valid.batchSize === false && (
+                                <p className="text-red-500 text-sm">Input must be positive integer number (e.g. 32)</p>
                             )
                         }
                     </div>
+                </div>
+
+                <div className="flex justify-center mt-8">
+                    <button
+                        disabled={isTraining}
+                        onClick={() => {
+                            setIsStep5Valid({
+                                epochs: true,
+                                batchSize: true,
+                            });
+                            setFitModel({
+                                epochs: 10,
+                                batchSize: 32,
+                            });
+                        }}
+                        className={`
+                    px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
+                    cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
+                    disabled:cursor-not-allowed disabled:opacity-50
+                `}>
+                        <i className="fa-solid fa-star"></i> Use recommended
+                    </button>
                 </div>
             </section>
 
@@ -235,19 +277,19 @@ export function Step5Page({
                     <button
                         disabled={isModelSaved}
                         onClick={saveModelHandler}
-                        className={`${(isFirstTraining || isTraining) ? 'hidden' : 'block'}
+                        className={`${(isFirstTraining || isTraining || isModelSaved) ? 'hidden' : 'block'}
                             px-4 py-2 font-bold text-white ${isModelSaved ? 'bg-green-500' : 'bg-orange-500'} border-b-4 border-black
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        {isModelSaved ? 'Saved' : 'Save Model'} <i className={`fa-solid ${isModelSaved ? 'fa-check' : 'fa-save'}`}></i>
+                        Save Model <i className="fa-solid fa-save"></i>
                     </button>
                 </div>
 
                 <div className={`${isTraining ? 'block' : 'hidden'} mt-2 mx-auto w-max p-2 border rounded-md shadow-lg`}>
                     <div className="flex justify-center items-center'">
                         <div className="w-[30px] aspect-square rounded-full border-4 border-blue-500 border-r-gray-500 animate-spin"></div>
-                        <span className="ml-2 line-clamp-1 text-ellipsis">{progressTraining}</span>
+                        <span className="ml-2 line-clamp-1 text-ellipsis">{progress}</span>
                     </div>
                 </div>
             </section >

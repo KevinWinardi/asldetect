@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Camera } from "../utils/Camera";
 import { Canvas } from "../utils/Canvas";
 import { Mediapipe } from "../utils/Mediapipe";
@@ -15,6 +15,7 @@ export function DetectionPage() {
 
     const videoElementRef = useRef<HTMLVideoElement | null>(null);
     const cameraSelectElementRef = useRef<HTMLSelectElement | null>(null);
+    const modelSelectElementRef = useRef<HTMLSelectElement | null>(null);
     const canvasElementRef = useRef<HTMLCanvasElement | null>(null);
 
     const cameraChangeHandlerRef = useRef<((e: Event) => void) | null>(null);
@@ -39,6 +40,8 @@ export function DetectionPage() {
         mediapipeInstanceRef.current = new Mediapipe();
 
         return () => {
+            cameraInstanceRef.current?.stop();
+
             cameraInstanceRef.current = null;
             canvasInstanceRef.current = null;
             mediapipeInstanceRef.current = null;
@@ -102,7 +105,7 @@ export function DetectionPage() {
                 cameraChangeHandlerRef.current = cameraChangeHandlerTemp;
                 cameraSelectElement.addEventListener('change', cameraChangeHandlerRef.current);
 
-                const aslMetadata = await BaseModel.loadASLMetadata('model');
+                const aslMetadata = await BaseModel.loadASLMetadata();
                 await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata);
             }
         } else {
@@ -111,7 +114,7 @@ export function DetectionPage() {
             if (confirmation.isConfirmed) {
                 setIsCameraRunnning(false);
                 setDisplayText('');
-                
+
                 cameraInstance.stop();
                 canvasInstance.clear();
 
@@ -121,6 +124,10 @@ export function DetectionPage() {
         }
     }
 
+    async function modelChangeHandler(e:ChangeEvent<HTMLSelectElement>) {
+        const value = e.target.value;
+    }
+    
     return (
         <div className="px-4 sm:px-8 pt-24 pb-8">
             <h1 className="font-bold text-4xl text-center text-yellow-900">Detection</h1>
@@ -137,6 +144,12 @@ export function DetectionPage() {
                 </section>
 
                 <section className="flex flex-col items-center mt-8">
+                    <label htmlFor="model-select"></label>
+                    <select onChange={(e) => modelChangeHandler(e)} ref={modelSelectElementRef} name="model-select"
+                        className="w-full mt-4 p-2 border rounded hidden">
+                        <option value="default">Default</option>
+                    </select>
+
                     <div className="relative w-full h-max">
                         <video ref={videoElementRef} className="border rounded block w-full min-h-96 bg-white"></video>
                         <canvas ref={canvasElementRef} className="absolute top-0 left-0 block w-full min-h-96"></canvas>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import type { SplitDataType } from "../../types/splitDataType";
+import { ChartJS } from "../../utils/ChartJS";
 
 function InformationHelper() {
     return (
@@ -27,27 +28,37 @@ export function Step2Page({
     splitData,
     setSplitData,
 }: {
-    isStep2Valid: boolean,
-    setIsStep2Valid: React.Dispatch<React.SetStateAction<boolean>>,
+    isStep2Valid: boolean | null,
+    setIsStep2Valid: React.Dispatch<React.SetStateAction<boolean | null>>,
     splitData: SplitDataType,
     setSplitData: React.Dispatch<React.SetStateAction<SplitDataType>>,
 }) {
-    const trainInputElementRef = useRef<HTMLInputElement | null>(null);
-    const valInputElementRef = useRef<HTMLInputElement | null>(null);
-    const testInputElementRef = useRef<HTMLInputElement | null>(null);
+    const splitDataCanvasElementRef = useRef<HTMLCanvasElement|null>(null);
 
     useEffect(() => {
-        const values = [splitData.train, splitData.val, splitData.test].map(Number);
-        const sum = values.reduce((a, b) => a + b, 0);
+        const values = [splitData.train, splitData.val, splitData.test];
+        ChartJS.createSplitDataChart(splitDataCanvasElementRef.current, splitData);
 
-        // Validation
-        if (values.some(v => isNaN(v) || !Number.isInteger(v) || v <= 0) || sum !== 100) {
-            setIsStep2Valid(false);
+        if (values.some(v => v === null)) {
+            setIsStep2Valid(null);
             return;
         }
 
-        setIsStep2Valid(true);
+        const nums = values.map(Number);
+        const sum = nums.reduce((a, b) => a + b, 0);
+
+        if (nums.some(v => isNaN(v) || !Number.isInteger(v) || v <= 0) || sum !== 100) {
+            setIsStep2Valid(false);
+        } else {
+            setIsStep2Valid(true);
+        }
     }, [splitData]);
+
+    const inputs = [
+        { id: 'train', label: 'Training' },
+        { id: 'val', label: 'Validation' },
+        { id: 'test', label: 'Testing' },
+    ]
 
     return (
         <>
@@ -56,79 +67,51 @@ export function Step2Page({
             <InformationHelper />
 
             <section className="flex flex-col sm:flex-row gap-8 mt-8 rounded">
-                <div className="flex flex-col">
-                    <label htmlFor="train-percentage" className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">Train</label>
-                    <div className="relative">
-                        <input
-                            ref={trainInputElementRef}
-                            value={splitData.train}
-                            onChange={(e) => setSplitData(prev => ({
-                                ...prev,
-                                train: Number(e.target.value)
-                            }))}
-                            id="train-percentage"
-                            type="number"
-                            step={1}
-                            className="w-9/12 p-2 border rounded-es" />
-                        <span className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-3/12 font-semibold text-black bg-gray-300 border border-black rounded-r">
-                            %
-                        </span>
-                    </div>
-                </div>
-                <div className="flex flex-col">
-                    <label htmlFor="val-percentage" className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">Validation</label>
-                    <div className="relative">
-                        <input
-                            ref={valInputElementRef}
-                            value={splitData.val}
-                            onChange={(e) => setSplitData(prev => ({
-                                ...prev,
-                                val: Number(e.target.value)
-                            }))}
-                            id="val-percentage"
-                            type="number"
-                            step={1}
-                            className="w-9/12 p-2 border rounded-es" />
-                        <span className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-3/12 font-semibold text-black bg-gray-300 border border-black rounded-r">
-                            %
-                        </span>
-                    </div>
-                </div>
-                <div className="flex flex-col">
-                    <label htmlFor="test-percentage" className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">Testing</label>
-                    <div className="relative">
-                        <input
-                            ref={testInputElementRef}
-                            value={splitData.test}
-                            onChange={(e) => setSplitData(prev => ({
-                                ...prev,
-                                test: Number(e.target.value)
-                            }))}
-                            id="test-percentage"
-                            type="number"
-                            step={1}
-                            className="w-9/12 p-2 border rounded-es" />
-                        <span className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-3/12 font-semibold text-black bg-gray-300 border border-black rounded-r">
-                            %
-                        </span>
-                    </div>
-                </div>
+                {
+                    inputs.map(({ id, label }) => (
+                        <div key={id} className="flex flex-col">
+                            <label htmlFor={`${id}-percentage`} className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">{label}</label>
+                            <div className="relative">
+                                <input
+                                    value={splitData[id as keyof SplitDataType] ?? ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setSplitData(prev => ({
+                                            ...prev,
+                                            [id]: value === '' ? null : Number(e.target.value),
+                                        }))
+                                    }}
+                                    id={`${id}-percentage`}
+                                    type="number"
+                                    step={1}
+                                    className="w-9/12 p-2 border rounded-es" />
+                                <span className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-3/12 font-semibold text-black bg-gray-300 border border-black rounded-r">
+                                    %
+                                </span>
+                            </div>
+                        </div>
+                    ))
+                }
             </section>
 
             {
-                !isStep2Valid && (
-                    <p className="mt-2 text-sm text-red-500">Each input must be positive integer number</p>
+                isStep2Valid === false && (
+                    <p className="mt-2 text-sm text-red-500">Each input must be positive integer number and sum 100%</p>
                 )
             }
 
-            <div className="mt-4 italic">
+            <section className="mt-4 italic">
                 <p>There are several commonly ratio for split data into train/val/test</p>
                 <ul className="list-inside list-disc">
                     <li className="ml-4">70 : 15 : 15</li>
                     <li className="ml-4">80 : 10 : 10</li>
                     <li className="ml-4">90 : 5 : 5</li>
                 </ul>
-            </div>
+            </section>
+
+            <section className="mt-8">
+                <canvas ref={splitDataCanvasElementRef}></canvas>
+            </section>
 
             <div className="flex justify-center mt-12">
                 <button

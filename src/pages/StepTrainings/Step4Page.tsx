@@ -1,6 +1,6 @@
 import type React from "react";
 import { Tooltip } from "../../components/Tooltip";
-import type { CompileType } from "../../types/compileType";
+import type { CompileModelType } from "../../types/compileModelType";
 
 export function Step4Page({
     isStep4Valid,
@@ -9,15 +9,15 @@ export function Step4Page({
     setCompileModel,
 }: {
     isStep4Valid: {
-        optimizer: boolean,
-        learningRate: boolean,
+        optimizer: boolean | null,
+        learningRate: boolean | null,
     },
     setIsStep4Valid: React.Dispatch<React.SetStateAction<{
-        optimizer: boolean,
-        learningRate: boolean,
+        optimizer: boolean | null,
+        learningRate: boolean | null,
     }>>,
-    compileModel: CompileType,
-    setCompileModel: React.Dispatch<React.SetStateAction<CompileType>>,
+    compileModel: CompileModelType,
+    setCompileModel: React.Dispatch<React.SetStateAction<CompileModelType>>,
 }) {
     return (
         <>
@@ -27,7 +27,7 @@ export function Step4Page({
                 <p>Prepares your model for training, it sets how the model learns.</p>
             </section>
 
-            <div className="flex flex-col mt-4">
+            <section className="mt-4">
                 <div className="flex">
                     <p className="w-max px-2 py-2 font-semibold text-white bg-zinc-700 border border-black rounded-ss rounded-se">
                         Compile
@@ -42,7 +42,7 @@ export function Step4Page({
                                 optimizer
                             </label>
                             <select
-                                value={compileModel.optimizer}
+                                value={compileModel.optimizer ?? ''}
                                 required
                                 id="optimizer"
                                 className="w-full p-2 border rounded-se rounded-ee"
@@ -56,25 +56,26 @@ export function Step4Page({
                                     setIsStep4Valid(prev => ({ ...prev, optimizer: validity }));
                                 }}
                             >
-                                <option value="adam" className="border-4 bg-blue-100">adam</option>
-                                <option value="rmsprop" className="border-4 bg-blue-100">rmsprop</option>
-                                <option value="sgd" className="border-4 bg-blue-100">sgd</option>
+                                <option value="" disabled>Select optimizer</option>
+                                <option value="adam">Adam</option>
+                                <option value="rmsprop">RMSProp</option>
+                                <option value="sgd">SGD</option>
                             </select>
                             <Tooltip html={
                                 <>
                                     <p>An optimizer is an algorithm that adjusts the model's parameters (like weights and biases)
                                         during training to minimize the loss function — that is, to make predictions more accurate.</p>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
-                                        <span className="font-mono">- adam:</span>
+                                        <span className="font-mono">- Adam:</span>
                                         <span>combines momentum (past gradients) + RMSProp (adaptive learning rates).
                                             Keeps track of both mean and variance of gradients.</span>
                                     </div>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
-                                        <span className="font-mono">- rmsprop:</span>
+                                        <span className="font-mono">- RMSProp:</span>
                                         <span>keeps a moving average of squared gradients and divides the learning rate by this average</span>
                                     </div>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
-                                        <span className="font-mono">- sgd:</span>
+                                        <span className="font-mono">- SGD:</span>
                                         <span>updates weights using the gradient of the loss with respect to each parameter for each batch</span>
                                     </div>
                                 </>
@@ -82,7 +83,7 @@ export function Step4Page({
                             />
                         </div>
                         {
-                            !isStep4Valid.optimizer && (
+                            isStep4Valid.optimizer === false && (
                                 <p className="text-red-500 text-sm">Invalid optimizer selection</p>
                             )
                         }
@@ -96,7 +97,7 @@ export function Step4Page({
                                 learning_rate
                             </label>
                             <input
-                                value={compileModel.learningRate}
+                                value={compileModel.learningRate ?? ''}
                                 id="learning-rate"
                                 type="number"
                                 required
@@ -105,13 +106,20 @@ export function Step4Page({
                                 max={1}
                                 className={`w-full p-2 border rounded-se rounded-ee`}
                                 onChange={(e) => {
-                                    const value = Number(e.target.value);
+                                    const value = e.target.value.trim();
+                                    if (value === '') {
+                                        setCompileModel(prev => ({ ...prev, learningRate: null }));
+                                        setIsStep4Valid(prev => ({ ...prev, learningRate: false }));
+                                        return;
+                                    }
+
+                                    const parsedValue = Number(value);
                                     let validity = true;
-                                    if (isNaN(value) || value <= 0 || value >= 1) {
+                                    if (isNaN(parsedValue) || parsedValue <= 0 || parsedValue >= 1) {
                                         validity = false;
                                     }
 
-                                    setCompileModel(prev => ({ ...prev, learningRate: value }));
+                                    setCompileModel(prev => ({ ...prev, learningRate: parsedValue }));
                                     setIsStep4Valid(prev => ({ ...prev, learningRate: validity }));
                                 }}
                             />
@@ -128,8 +136,8 @@ export function Step4Page({
                             } />
                         </div>
                         {
-                            !isStep4Valid.learningRate && (
-                                <p className="text-red-500 text-sm">Learning Rate must be float in range 0 - 1</p>
+                            isStep4Valid.learningRate === false && (
+                                <p className="text-red-500 text-sm">Learning Rate must be float in range 0 - 1 (e.g. 0.001)</p>
                             )
                         }
                     </div>
@@ -146,7 +154,7 @@ export function Step4Page({
                             id="loss"
                             className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed"
                         >
-                            <option value="accuracy" className="border-4 bg-blue-100">accuracy</option>
+                            <option value="categoricalCrossentropy">Categorical Crossentropy</option>
                         </select>
                         <Tooltip text="A number that shows how wrong the model's predictions are compared to the real answers.
 The model tries to minimize this value while learning." />
@@ -164,13 +172,34 @@ The model tries to minimize this value while learning." />
                             id="metrics"
                             className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed"
                         >
-                            <option value="accuracy" className="border-4 bg-blue-100">accuracy</option>
+                            <option value="accuracy">accuracy</option>
                         </select>
                         <Tooltip text="Extra measures to evaluate model performance, usually for reporting" />
                     </div>
                 </div>
-            </div>
 
+                <div className="flex justify-center mt-8">
+                    <button
+                        onClick={() => {
+                            setIsStep4Valid({
+                                optimizer: true,
+                                learningRate: true,
+                            });
+                            setCompileModel({
+                                optimizer: 'adam',
+                                learningRate: 0.001,
+                                loss: 'categoricalCrossentropy',
+                                metrics: 'accuracy',
+                            });
+                        }}
+                        className={`
+                    px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
+                    cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
+                `}>
+                        <i className="fa-solid fa-star"></i> Use recommended
+                    </button>
+                </div>
+            </section>
         </>
     );
 }

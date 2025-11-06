@@ -2,8 +2,8 @@ import type React from "react";
 import { useState } from "react";
 import { Dialog } from "../../utils/Dialog";
 import { Tooltip } from "../../components/Tooltip";
+import { BaseModel } from "../../utils/BaseModel";
 import type { BatchNormalizationLayerType, DenseLayerType, DropoutLayerType, LayerType } from "../../types/layerType";
-import { Model } from "../../utils/Model";
 
 function InformationHelper() {
     return (
@@ -37,9 +37,9 @@ function HeaderLayer({
     title,
     removeLayerHandler,
 }: {
-    id: number,
+    id: string,
     title: string,
-    removeLayerHandler: (id: number) => {},
+    removeLayerHandler: (id: string) => void,
 }) {
     return (
         <div className="flex">
@@ -61,8 +61,8 @@ export function Step3Page({
     layerModel,
     setLayerModel,
 }: {
-    isStep3Valid: { [key: string]: boolean },
-    setIsStep3Valid: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>,
+    isStep3Valid: { [key: string]: boolean | null },
+    setIsStep3Valid: React.Dispatch<React.SetStateAction<{ [key: string]: boolean | null }>>,
     layerModel: LayerType[],
     setLayerModel: React.Dispatch<React.SetStateAction<LayerType[]>>,
 }) {
@@ -71,58 +71,58 @@ export function Step3Page({
     function addLayerHandler(type: 'dense' | 'batchNormalization' | 'dropout') {
         setIsOpenOptionLayer(false);
 
-        const id = +new Date();
+        const id = crypto.randomUUID();
         switch (type) {
             case 'dense':
                 setLayerModel(prev => {
                     const newLayer: DenseLayerType = {
                         id: id,
                         type: 'dense',
-                        activation: 'relu',
-                        units: 32,
+                        activation: null,
+                        units: null,
                     };
 
                     const updated = [...prev];
                     updated.splice(updated.length - 1, 0, newLayer);
                     return updated;
                 })
-                setIsStep3Valid(prev => ({ ...prev, [`units-${id}`]: true }));
-                setIsStep3Valid(prev => ({ ...prev, [`activation-${id}`]: true }));
+                setIsStep3Valid(prev => ({ ...prev, [`units-${id}`]: null }));
+                setIsStep3Valid(prev => ({ ...prev, [`activation-${id}`]: null }));
                 break;
             case 'batchNormalization':
                 setLayerModel(prev => {
                     const newLayer: BatchNormalizationLayerType = {
                         id: id,
                         type: 'batchNormalization',
-                        epsilon: 0.001,
-                        momentum: 0.99,
+                        epsilon: null,
+                        momentum: null,
                     };
 
                     const updated = [...prev];
                     updated.splice(updated.length - 1, 0, newLayer);
                     return updated;
                 });
-                setIsStep3Valid(prev => ({ ...prev, [`momentum-${id}`]: true }));
-                setIsStep3Valid(prev => ({ ...prev, [`epsilon-${id}`]: true }));
+                setIsStep3Valid(prev => ({ ...prev, [`momentum-${id}`]: null }));
+                setIsStep3Valid(prev => ({ ...prev, [`epsilon-${id}`]: null }));
                 break;
             case 'dropout':
                 setLayerModel(prev => {
                     const newLayer: DropoutLayerType = {
                         id: id,
                         type: 'dropout',
-                        rate: 0.5,
+                        rate: null,
                     }
 
                     const updated = [...prev];
                     updated.splice(updated.length - 1, 0, newLayer);
                     return updated;
                 })
-                setIsStep3Valid(prev => ({ ...prev, [`rate-${id}`]: true }));
+                setIsStep3Valid(prev => ({ ...prev, [`rate-${id}`]: null }));
                 break;
         }
     }
 
-    async function removeLayerHandler(id: number) {
+    async function removeLayerHandler(id: string): Promise<void> {
         const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
         if (confirmation.isConfirmed) {
             setLayerModel(prev =>
@@ -148,20 +148,22 @@ export function Step3Page({
                                             units
                                         </label>
                                         <input
-                                            value={layer.units}
+                                            value={layer.units ?? ''}
                                             onChange={(e) => {
-                                                const value = Number(e.target.value);
+                                                const value = e.target.value.trim();
+                                                if (value === '') {
+                                                    setIsStep3Valid(prev => ({ ...prev, [`units-${layer.id}`]: false }));
+                                                    setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dense' ? { ...l, units: null } : l));
+                                                    return;
+                                                }
+
+                                                const parsedValue = Number(value);
                                                 let validity = true;
-                                                if (isNaN(value) || !Number.isInteger(value) || value <= 0) {
+                                                if (isNaN(parsedValue) || !Number.isInteger(parsedValue) || parsedValue <= 0) {
                                                     validity = false;
                                                 }
                                                 setIsStep3Valid(prev => ({ ...prev, [`units-${layer.id}`]: validity }));
-
-                                                setLayerModel(prev =>
-                                                    prev.map(l =>
-                                                        l.id === layer.id ? { ...l, units: value } : l
-                                                    )
-                                                );
+                                                setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, units: parsedValue } : l));
                                             }}
                                             id={`units-${layer.id}`}
                                             type="number"
@@ -171,7 +173,7 @@ export function Step3Page({
                                         <Tooltip text="Number of neurons" />
                                     </div>
                                     {
-                                        !isStep3Valid[`units-${layer.id}`] && (
+                                        isStep3Valid[`units-${layer.id}`] === false && (
                                             <p className="text-red-500 text-sm">Input must be positive integer number</p>
                                         )
                                     }
@@ -186,7 +188,7 @@ export function Step3Page({
                                         </label>
                                         <select
                                             id={`activation-${layer.id}`}
-                                            value={layer.activation}
+                                            value={layer.activation ?? ''}
                                             required
                                             onChange={(e) => {
                                                 const value = e.target.value;
@@ -196,7 +198,6 @@ export function Step3Page({
                                                 }
 
                                                 setIsStep3Valid(prev => ({ ...prev, [`activation-${layer.id}`]: validity }));
-
                                                 setLayerModel(prev =>
                                                     prev.map(l =>
                                                         l.id === layer.id && l.type === 'dense'
@@ -208,10 +209,11 @@ export function Step3Page({
                                             }}
                                             className="w-full p-2 border rounded-se rounded-ee"
                                         >
-                                            <option value="relu" className="border-4 bg-blue-100">relu</option>
-                                            <option value="elu" className="border-4 bg-blue-100">elu</option>
-                                            <option value="swish" className="border-4 bg-blue-100">swish</option>
-                                            <option value="tanh" className="border-4 bg-blue-100">tanh</option>
+                                            <option value="" disabled>Select activation</option>
+                                            <option value="relu" className="border-black">relu</option>
+                                            <option value="elu" className="border-black">elu</option>
+                                            <option value="swish" className="border-black">swish</option>
+                                            <option value="tanh" className="border-black">tanh</option>
                                         </select>
                                         <Tooltip html={
                                             <>
@@ -236,7 +238,7 @@ export function Step3Page({
                                         } />
                                     </div>
                                     {
-                                        !isStep3Valid[`activation-${layer.id}`] && (
+                                        isStep3Valid[`activation-${layer.id}`] === false && (
                                             <p className="text-red-500 text-sm">Activation can be used are relu, elu, swish, and tanh</p>
                                         )
                                     }
@@ -259,7 +261,7 @@ export function Step3Page({
                                         momentum
                                     </label>
                                     <input
-                                        value={layer.momentum}
+                                        value={layer.momentum ?? ''}
                                         id={`momentum-${layer.id}`}
                                         type="number"
                                         step={0.01}
@@ -267,25 +269,27 @@ export function Step3Page({
                                         max={1}
                                         className="w-full p-2 border rounded-se rounded-ee"
                                         onChange={(e) => {
-                                            const value = Number(e.target.value);
+                                            const value = e.target.value.trim();
+                                            if (value === '') {
+                                                setIsStep3Valid(prev => ({ ...prev, [`momentum-${layer.id}`]: false }));
+                                                setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, momentum: null } : l));
+                                                return;
+                                            }
+
+                                            const parsedValue = Number(value);
                                             let validity = true;
-                                            if (isNaN(value) || value <= 0 || value >= 1) {
+                                            if (isNaN(parsedValue) || parsedValue <= 0 || parsedValue >= 1) {
                                                 validity = false;
                                             }
 
                                             setIsStep3Valid(prev => ({ ...prev, [`momentum-${layer.id}`]: validity }));
-
-                                            setLayerModel(prev =>
-                                                prev.map(l =>
-                                                    l.id === layer.id ? { ...l, momentum: value } : l
-                                                )
-                                            );
+                                            setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, momentum: parsedValue } : l));
                                         }}
                                     />
                                     <Tooltip text="How much past mean/variance are kept" />
                                 </div>
                                 {
-                                    !isStep3Valid[`momentum-${layer.id}`] && (
+                                    isStep3Valid[`momentum-${layer.id}`] === false && (
                                         <p className="text-red-500 text-sm">Input must be a float greater than 0 and less than 1(e.g., 0.99)</p>
                                     )
                                 }
@@ -299,7 +303,7 @@ export function Step3Page({
                                         epsilon
                                     </label>
                                     <input
-                                        value={layer.epsilon}
+                                        value={layer.epsilon ?? ''}
                                         id={`epsilon-${layer.id}`}
                                         type="number"
                                         step={0.00001}
@@ -307,25 +311,26 @@ export function Step3Page({
                                         max={0.001}
                                         className="w-full p-2 border rounded-se rounded-ee"
                                         onChange={(e) => {
-                                            const value = Number(e.target.value);
-                                            let validity = true;
-                                            if (isNaN(value) || value <= 0 || value >= 1) {
-                                                validity = false;
+                                            const value = e.target.value.trim();
+                                            if (value === '') {
+                                                setIsStep3Valid(prev => ({ ...prev, [`epsilon-${layer.id}`]: false }));
+                                                setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, epsilon: null } : l));
+                                                return;
                                             }
 
+                                            const parsedValue = Number(value);
+                                            let validity = true;
+                                            if (isNaN(parsedValue) || parsedValue <= 0.00001 || parsedValue > 0.001) {
+                                                validity = false;
+                                            }
                                             setIsStep3Valid(prev => ({ ...prev, [`epsilon-${layer.id}`]: validity }));
-
-                                            setLayerModel(prev =>
-                                                prev.map(l =>
-                                                    l.id === layer.id ? { ...l, epsilon: value } : l
-                                                )
-                                            );
+                                            setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, epsilon: parsedValue } : l));
                                         }}
                                     />
                                     <Tooltip text="Small value to avoid division by zero" />
                                 </div>
                                 {
-                                    !isStep3Valid[`epsilon-${layer.id}`] && (
+                                    isStep3Valid[`epsilon-${layer.id}`] === false && (
                                         <p className="text-red-500 text-sm">Input must be float in range from 0.00001 - 0.001</p>
                                     )
                                 }
@@ -347,21 +352,23 @@ export function Step3Page({
                                         rate
                                     </label>
                                     <input
-                                        value={layer.rate}
+                                        value={layer.rate ?? ''}
                                         onChange={(e) => {
-                                            const value = Number(e.target.value);
+                                            const value = e.target.value.trim();
+                                            if (value === '') {
+                                                setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: validity }));
+                                                setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dense' ? { ...l, rate: value } : l));
+                                                return;
+                                            }
+
+                                            const parsedValue = Number(value);
                                             let validity = true;
-                                            if (isNaN(value) || value <= 0 || value >= 1) {
+                                            if (isNaN(parsedValue) || parsedValue <= 0 || parsedValue >= 1) {
                                                 validity = false
                                             }
 
                                             setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: validity }));
-
-                                            setLayerModel(prev =>
-                                                prev.map(l =>
-                                                    l.id === layer.id ? { ...l, rate: value } : l
-                                                )
-                                            );
+                                            setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dense' ? { ...l, rate: parsedValue } : l));
                                         }}
                                         id={`rate-${layer.id}`}
                                         type="number"
@@ -372,7 +379,7 @@ export function Step3Page({
                                     <Tooltip text="Fraction (0-1) of neurons to drop" />
                                 </div>
                                 {
-                                    !isStep3Valid[`rate-${layer.id}`] && (
+                                    isStep3Valid[`rate-${layer.id}`] === false && (
                                         <p className="text-red-500 text-sm">Input must be a float greater than 0 and less than 1 (e.g., 0.5)</p>
                                     )
                                 }
@@ -486,10 +493,10 @@ export function Step3Page({
                     </div>
                 </div>
 
-                <div className="flex justify-center mt-12">
+                <div className="flex justify-center mt-8">
                     <button
                         onClick={() => {
-                            const recommendedLayer: LayerType[] = Model.recommendedLayer();
+                            const recommendedLayer: LayerType[] = BaseModel.recommendedLayer();
                             setIsStep3Valid({});
                             recommendedLayer.forEach(item => {
                                 switch (item.type) {
@@ -509,8 +516,7 @@ export function Step3Page({
                         }}
                         className={`
                             px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
-                            cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
-                            disabled:cursor-not-allowed disabled:opacity-50
+                            cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                         `}>
                         <i className="fa-solid fa-star"></i> Use recommended
                     </button>
