@@ -91,11 +91,12 @@ export class Trainer extends BaseModel {
     }
 
     async saveModel(name: string, metadata: { mean: number[]; std: number[]; label: string[] }) {
-        const key = name.toLowerCase().replace(/\s+/g, '_');
+        const key = 'model_' + name.toLowerCase().replace(/\s+/g, '_');
         localStorage.setItem(
             key,
             JSON.stringify({
-                name,
+                key:key,
+                name:name,
                 createdAt: new Date(),
                 evaluationTrainVal: this.evaluationTrainVal,
                 evaluationTest: this.evaluationTest,

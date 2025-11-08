@@ -60,11 +60,11 @@ export class BaseModel {
         }
     }
 
-    static async loadASLMetadata(keyLocalStorage?: string) {
+    static async loadASLMetadata(keyName?: string) {
         let data;
-        if (keyLocalStorage) {
-            const res = localStorage.getItem(keyLocalStorage);
-            if (!res) throw new Error(`No metadata found for key: ${keyLocalStorage}`);
+        if (keyName) {
+            const res = localStorage.getItem(keyName);
+            if (!res) throw new Error(`No metadata found for key: ${keyName}`);
             data = JSON.parse(res);
         } else {
             const res = await fetch('asl_metadata.json');
@@ -136,5 +136,29 @@ export class BaseModel {
 
         layer.splice(layer.length - 1, 0, ...hiddenLayers);
         return layer;
+    }
+
+    static getAllModel(prefix: string): { key: string, name: string }[] {
+        const models = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith(prefix)) {
+                const value = localStorage.getItem(k);
+                if (value) {
+                    try {
+                        const item = JSON.parse(value);
+                        if (item && typeof item.key === 'string' && typeof item.name === 'string') {
+                            models.push({
+                                key: item.key,
+                                name: item.name,
+                            });
+                        }
+                    } catch (error:any) {
+                        throw new Error('Something error when getting the model');
+                    }
+                }
+            }
+        }
+        return models;
     }
 }

@@ -117,7 +117,7 @@ export function Step5Page({
                 inputValidator: (value) => {
                     const localStorageKeys = Object.keys(localStorage);
 
-                    if (localStorageKeys.includes(value.split(' ').join('_'))) {
+                    if (localStorageKeys.includes('model_' + value.split(' ').join('_'))) {
                         return 'This name already used, please use another name';
                     } else {
                         setIsModelSaved(true);

@@ -19,6 +19,9 @@ export class Predictor extends BaseModel {
     }
 
     static async loadModelFromStorage(keyName: string): Promise<tf.LayersModel> {
+        if (keyName === 'default') {
+            return await tf.loadLayersModel('./asl_model.json');
+        }
         return await tf.loadLayersModel(`localstorage://${keyName}`);
     }
 }

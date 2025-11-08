@@ -5,6 +5,7 @@ import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
 import type React from "react";
 import { Predictor } from "./Predictor";
+import { BaseModel } from "./BaseModel";
 
 export class Camera {
     cameraSelectElement: HTMLSelectElement | null;
@@ -195,8 +196,10 @@ export class Camera {
             std: tf.Tensor1D,
             label: [],
         },
+        keyModel: string,
     ): Promise<void> {
-        const loadModel = await tf.loadLayersModel('./asl_model.json');
+        const loadModel = await Predictor.loadModelFromStorage(keyModel);
+
         return new Promise((_, reject) => {
             const loop = () => {
                 try {

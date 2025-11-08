@@ -211,38 +211,6 @@ export function DatasetPage() {
         <div className="px-4 sm:px-8 pt-24 pb-8">
             <h1 className="font-bold text-4xl text-center text-yellow-900">Generate Dataset</h1>
 
-            <div className="mt-8 mx-auto p-4 flex flex-col gap-4 w-full max-w-md bg-white border rounded shadow-2xl">
-                <label htmlFor="data-per-label">Total data per label: <span className="text-red-500">*</span></label>
-                <div className="flex flex-col gap-2">
-                    <input
-                        disabled={isCameraRunning}
-                        ref={dataPerLabelInputElementRef}
-                        value={dataPerLabelInput}
-                        onChange={(e) => {
-                            const value = e.target.value.trim();
-                            let validity = true;
-                            const parsedValue = Number(value);
-                            if (isNaN(parsedValue) || !Number.isInteger(parsedValue) || parsedValue < 10) {
-                                validity = false;
-                            }
-                            setDataPerLabelInput(value);
-                            setIsValidDataPerLabel(validity);
-                        }}
-                        type="number"
-                        step={1}
-                        min={10}
-                        max={1000}
-                        id="data-per-label"
-                        placeholder="100"
-                        className="border rounded p-2 outline-none transition  focus:border-2 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed" />
-                    {
-                        isValidDataPerLabel === false && (
-                            <span className="text-sm text-red-500">Input must be positive integer number minimum 10</span>
-                        )
-                    }
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <section>
                     <ul
@@ -257,6 +225,38 @@ export function DatasetPage() {
                 </section>
 
                 <section className="flex flex-col items-center mt-8">
+                    <div className="mb-4 p-4 flex flex-col gap-4 w-full bg-white border rounded shadow-2xl">
+                        <label htmlFor="data-per-label">Total data per label: <span className="text-red-500">*</span></label>
+                        <div className="flex flex-col gap-2">
+                            <input
+                                disabled={isCameraRunning}
+                                ref={dataPerLabelInputElementRef}
+                                value={dataPerLabelInput}
+                                onChange={(e) => {
+                                    const value = e.target.value.trim();
+                                    let validity = true;
+                                    const parsedValue = Number(value);
+                                    if (isNaN(parsedValue) || !Number.isInteger(parsedValue) || parsedValue < 10) {
+                                        validity = false;
+                                    }
+                                    setDataPerLabelInput(value);
+                                    setIsValidDataPerLabel(validity);
+                                }}
+                                type="number"
+                                step={1}
+                                min={10}
+                                max={1000}
+                                id="data-per-label"
+                                placeholder="100"
+                                className="border rounded p-2 outline-none transition  focus:border-2 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+                            {
+                                isValidDataPerLabel === false && (
+                                    <span className="text-sm text-red-500">Input must be positive integer number minimum 10</span>
+                                )
+                            }
+                        </div>
+                    </div>
+                    
                     <div className="relative w-full h-max">
                         <video ref={videoElementRef} className="border rounded block w-full min-h-96 bg-white"></video>
                         <canvas ref={canvasElementRef} className="absolute top-0 left-0 block w-full min-h-96"></canvas>

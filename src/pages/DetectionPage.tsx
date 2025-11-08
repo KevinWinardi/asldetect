@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera } from "../utils/Camera";
 import { Canvas } from "../utils/Canvas";
 import { Mediapipe } from "../utils/Mediapipe";
@@ -8,6 +8,11 @@ import { BaseModel } from "../utils/BaseModel";
 export function DetectionPage() {
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [displayText, setDisplayText] = useState('');
+    const [keyModel, setKeyModel] = useState('');
+    const [optionModel, setOptionModel] = useState<{
+        key: string,
+        name: string,
+    }[] | null>(null);
 
     const cameraInstanceRef = useRef<Camera | null>(null);
     const canvasInstanceRef = useRef<Canvas | null>(null);
@@ -26,6 +31,11 @@ export function DetectionPage() {
             Dialog.showError('Some ref not found');
             return;
         }
+
+        const defaultUseModel = localStorage.getItem('default_use_model') ?? 'default';
+        setKeyModel(defaultUseModel);
+
+        setOptionModel(BaseModel.getAllModel('model_'));
 
         cameraInstanceRef.current = new Camera(
             cameraSelectElementRef.current,
@@ -106,7 +116,7 @@ export function DetectionPage() {
                 cameraSelectElement.addEventListener('change', cameraChangeHandlerRef.current);
 
                 const aslMetadata = await BaseModel.loadASLMetadata();
-                await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata);
+                await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata, keyModel);
             }
         } else {
             const confirmation = await Dialog.showConfirmation('Are you sure want to stop camera stream?');
@@ -124,10 +134,6 @@ export function DetectionPage() {
         }
     }
 
-    async function modelChangeHandler(e:ChangeEvent<HTMLSelectElement>) {
-        const value = e.target.value;
-    }
-    
     return (
         <div className="px-4 sm:px-8 pt-24 pb-8">
             <h1 className="font-bold text-4xl text-center text-yellow-900">Detection</h1>
@@ -144,11 +150,22 @@ export function DetectionPage() {
                 </section>
 
                 <section className="flex flex-col items-center mt-8">
-                    <label htmlFor="model-select"></label>
-                    <select onChange={(e) => modelChangeHandler(e)} ref={modelSelectElementRef} name="model-select"
-                        className="w-full mt-4 p-2 border rounded hidden">
-                        <option value="default">Default</option>
-                    </select>
+                    <div className="mb-4 p-4 flex flex-col gap-4 w-full bg-white border rounded shadow-2xl">
+                        <label htmlFor="model-select" className="font-semibold text-gray-700">Select model</label>
+                        <select
+                            disabled={isCameraRunning}
+                            onChange={(e) => setKeyModel(e.target.value)} ref={modelSelectElementRef} name="model-select"
+                            className={`w-full mb-4 p-2 border rounded disabled:opacity-75 disabled:cursor-not-allowed`}>
+                            <option value="default">Default</option>
+                            {
+                                optionModel && (
+                                    optionModel.map(model => (
+                                        <option key={model.key} value={model.key}>{model.name}</option>
+                                    ))
+                                )
+                            }
+                        </select>
+                    </div>
 
                     <div className="relative w-full h-max">
                         <video ref={videoElementRef} className="border rounded block w-full min-h-96 bg-white"></video>
