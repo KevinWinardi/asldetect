@@ -9,9 +9,13 @@ export function DetectionPage() {
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [displayText, setDisplayText] = useState('');
     const [keyModel, setKeyModel] = useState('');
-    const [optionModel, setOptionModel] = useState<{
+    const [modelOption, setModelOption] = useState<{
         key: string,
         name: string,
+    }[] | null>(null);
+    const [cameraOption, setCameraOption] = useState<{
+        value: string,
+        text: string,
     }[] | null>(null);
 
     const cameraInstanceRef = useRef<Camera | null>(null);
@@ -19,15 +23,10 @@ export function DetectionPage() {
     const mediapipeInstanceRef = useRef<Mediapipe | null>(null);
 
     const videoElementRef = useRef<HTMLVideoElement | null>(null);
-    const cameraSelectElementRef = useRef<HTMLSelectElement | null>(null);
-    const modelSelectElementRef = useRef<HTMLSelectElement | null>(null);
     const canvasElementRef = useRef<HTMLCanvasElement | null>(null);
 
-    const cameraChangeHandlerRef = useRef<((e: Event) => void) | null>(null);
-    const videoLoaddedHandlerRef = useRef<(() => void) | null>(null);
-
     useEffect(() => {
-        if (!videoElementRef.current || !cameraSelectElementRef.current || !canvasElementRef.current) {
+        if (!videoElementRef.current || !canvasElementRef.current) {
             Dialog.showError('Some ref not found');
             return;
         }
@@ -35,12 +34,13 @@ export function DetectionPage() {
         const defaultUseModel = localStorage.getItem('default_use_model') ?? 'default';
         setKeyModel(defaultUseModel);
 
-        setOptionModel(BaseModel.getAllModel('model_'));
+        const modelOptionList = BaseModel.getAllModel('model_');
+        if (modelOptionList === false) {
+            return;
+        }
+        setModelOption(modelOptionList);
 
-        cameraInstanceRef.current = new Camera(
-            cameraSelectElementRef.current,
-            videoElementRef.current,
-        );
+        cameraInstanceRef.current = new Camera(videoElementRef.current);
 
         canvasInstanceRef.current = new Canvas(
             canvasElementRef.current,
@@ -55,19 +55,12 @@ export function DetectionPage() {
             cameraInstanceRef.current = null;
             canvasInstanceRef.current = null;
             mediapipeInstanceRef.current = null;
-
-            if (videoLoaddedHandlerRef.current && videoElementRef.current) {
-                videoElementRef.current.removeEventListener('loadeddata', videoLoaddedHandlerRef.current);
-            }
-            if (cameraChangeHandlerRef.current && cameraSelectElementRef.current) {
-                cameraSelectElementRef.current.removeEventListener('click', cameraChangeHandlerRef.current);
-            }
         }
     }, [])
 
     async function cameraButtonHandler() {
         if (
-            !cameraSelectElementRef.current ||
+            // !cameraSelectElementRef.current ||
             !videoElementRef.current ||
             !canvasInstanceRef.current ||
             !mediapipeInstanceRef.current ||
@@ -77,7 +70,7 @@ export function DetectionPage() {
             return Dialog.showError('Some ref not found');
         }
 
-        const cameraSelectElement = cameraSelectElementRef.current;
+        // const cameraSelectElement = cameraSelectElementRef.current;
         const cameraInstance = cameraInstanceRef.current;
         const canvasInstance = canvasInstanceRef.current;
         const mediapipeInstance = mediapipeInstanceRef.current;
@@ -89,32 +82,15 @@ export function DetectionPage() {
 
             const permission = await cameraInstance.requestPermission();
             if (permission) {
-                cameraInstance.createOptions();
+                const cameraOptionList = await cameraInstance.createOptions();
+                if (cameraOptionList === false) {
+                    return;
+                }
+                setCameraOption(cameraOptionList);
+
                 cameraInstance.start();
 
                 const handLandmarker = await mediapipeInstance.createHandLandmarker();
-
-                // Video loadded event handler
-                if (videoLoaddedHandlerRef.current) {
-                    videoElementRef.current.removeEventListener('loadeddata', videoLoaddedHandlerRef.current);
-                }
-                const videoLoaddedHandlerTemp = () => {
-                    canvasInstanceRef.current?.setWidthHeight(videoElementRef.current!.videoWidth, videoElementRef.current!.videoHeight);
-                }
-                videoLoaddedHandlerRef.current = videoLoaddedHandlerTemp;
-                videoElementRef.current.addEventListener('loadeddata', videoLoaddedHandlerRef.current);
-
-                // Camera change event handler
-                if (cameraChangeHandlerRef.current) {
-                    cameraSelectElement.removeEventListener('change', cameraChangeHandlerRef.current)
-                }
-                const cameraChangeHandlerTemp = (e: Event) => {
-                    const target = e.target as HTMLSelectElement;
-                    cameraInstanceRef.current!.change(target.value);
-                }
-                cameraChangeHandlerRef.current = cameraChangeHandlerTemp;
-                cameraSelectElement.addEventListener('change', cameraChangeHandlerRef.current);
-
                 const aslMetadata = await BaseModel.loadASLMetadata();
                 await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata, keyModel);
             }
@@ -127,9 +103,6 @@ export function DetectionPage() {
 
                 cameraInstance.stop();
                 canvasInstance.clear();
-
-                cameraSelectElement.innerHTML = '';
-                cameraSelectElement.classList.add('hidden');
             }
         }
     }
@@ -154,12 +127,12 @@ export function DetectionPage() {
                         <label htmlFor="model-select" className="font-semibold text-gray-700">Select model</label>
                         <select
                             disabled={isCameraRunning}
-                            onChange={(e) => setKeyModel(e.target.value)} ref={modelSelectElementRef} name="model-select"
+                            onChange={(e) => setKeyModel(e.target.value)} name="model-select"
                             className={`w-full mb-4 p-2 border rounded disabled:opacity-75 disabled:cursor-not-allowed`}>
                             <option value="default">Default</option>
                             {
-                                optionModel && (
-                                    optionModel.map(model => (
+                                modelOption && (
+                                    modelOption.map(model => (
                                         <option key={model.key} value={model.key}>{model.name}</option>
                                     ))
                                 )
@@ -168,12 +141,24 @@ export function DetectionPage() {
                     </div>
 
                     <div className="relative w-full h-max">
-                        <video ref={videoElementRef} className="border rounded block w-full min-h-96 bg-white"></video>
+                        <video
+                            ref={videoElementRef}
+                            onLoadedData={e => canvasInstanceRef.current?.setWidthHeight(e.currentTarget.videoWidth, e.currentTarget.videoHeight)}
+                            className="border rounded block w-full min-h-96 bg-white">
+                        </video>
                         <canvas ref={canvasElementRef} className="absolute top-0 left-0 block w-full min-h-96"></canvas>
                     </div>
 
-                    <select ref={cameraSelectElementRef} name="camera-select"
-                        className="w-full mt-4 p-2 border rounded hidden">
+                    <select
+                        onChange={e => cameraInstanceRef.current!.change(e.target.value)}
+                        className={`w-full mt-4 p-2 border rounded ${isCameraRunning ? 'block' : 'hidden'}`}>
+                        {
+                            cameraOption && (
+                                cameraOption.map(camera => (
+                                    <option key={camera.value} value={camera.value}>{camera.text}</option>
+                                ))
+                            )
+                        }
                     </select>
 
                     <div className="mt-4 text-4xl font-bold">{displayText}</div>
@@ -192,6 +177,6 @@ export function DetectionPage() {
                     </div>
                 </section>
             </div>
-        </div>
+        </div >
     );
 }

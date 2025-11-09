@@ -95,8 +95,8 @@ export class Trainer extends BaseModel {
         localStorage.setItem(
             key,
             JSON.stringify({
-                key:key,
-                name:name,
+                key: key,
+                name: name,
                 createdAt: new Date(),
                 evaluationTrainVal: this.evaluationTrainVal,
                 evaluationTest: this.evaluationTest,

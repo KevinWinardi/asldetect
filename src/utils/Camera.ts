@@ -5,16 +5,13 @@ import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
 import type React from "react";
 import { Predictor } from "./Predictor";
-import { BaseModel } from "./BaseModel";
 
 export class Camera {
-    cameraSelectElement: HTMLSelectElement | null;
     videoElement: HTMLVideoElement | null;
     currentStream: MediaStream | null;
     detectionLoopId: number | null;
 
-    constructor(cameraSelectElement: HTMLSelectElement | null, videoElement: HTMLVideoElement | null) {
-        this.cameraSelectElement = cameraSelectElement;
+    constructor(videoElement: HTMLVideoElement | null) {
         this.videoElement = videoElement;
         this.currentStream = null;
         this.detectionLoopId = null;
@@ -37,25 +34,22 @@ export class Camera {
         }
     }
 
-    async createOptions(): Promise<void> {
+    async createOptions(): Promise<{ value: string, text: string }[] | false> {
         try {
-            if (!this.cameraSelectElement) {
-                throw new Error('Camera select not found');
-            }
-
+            const options: { value: string, text: string }[] = [];
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoInputs = devices.filter(device => device.kind === 'videoinput');
 
             videoInputs.forEach((device, index) => {
-                const option = document.createElement('option');
-                option.value = device.deviceId;
-                option.text = device.label || `Camera ${index + 1}`;
-                this.cameraSelectElement!.appendChild(option);
+                const value = device.deviceId;
+                const text = device.label || `Camera ${index + 1}`;
+                options.push({ value: value, text: text });
             });
 
-            this.cameraSelectElement.classList.remove('hidden');
+            return options;
         } catch (error: any) {
             Dialog.showError(error.message);
+            return false;
         }
     }
 

@@ -54,7 +54,7 @@ export function Header() {
                         </li>
                         <li>
                             <Link
-                                to="/dataset"
+                                to="/detection"
                                 className="block p-4 hover:bg-blue-500 hover:text-white transition"
                                 onClick={() => setOpenMenu(false)}
                             >

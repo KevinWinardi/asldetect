@@ -7,7 +7,6 @@ import { Dataset } from "../utils/Dataset";
 
 export function DatasetPage() {
     const videoElementRef = useRef<HTMLVideoElement | null>(null);
-    const cameraSelectElementRef = useRef<HTMLSelectElement | null>(null);
     const nextLetterButtonElementRef = useRef<HTMLButtonElement | null>(null);
     const downloadButtonElementRef = useRef<HTMLButtonElement | null>(null);
     const canvasElementRef = useRef<HTMLCanvasElement | null>(null);
@@ -19,22 +18,23 @@ export function DatasetPage() {
     const datasetInstanceRef = useRef<Dataset | null>(null);
 
     const nextLetterHandlerRef = useRef<(() => void) | null>(null);
-    const cameraChangeHandlerRef = useRef<((e: Event) => void) | null>(null);
-    const videoLoaddedHandlerRef = useRef<(() => void) | null>(null);
 
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [dataPerLabelInput, setDataPerLabelInput] = useState<string | number>('');
     const [isValidDataPerLabel, setIsValidDataPerLabel] = useState<boolean | null>(null);
     const [displayText, setDisplayText] = useState('');
+    const [cameraOption, setCameraOption] = useState<{
+        value: string,
+        text: string,
+    }[] | null>(null);
 
     useEffect(() => {
-        if (!videoElementRef.current || !cameraSelectElementRef.current || !canvasElementRef.current) {
+        if (!videoElementRef.current || !canvasElementRef.current) {
             Dialog.showError('Some ref not found');
             return;
         }
 
         cameraInstanceRef.current = new Camera(
-            cameraSelectElementRef.current,
             videoElementRef.current,
         );
 
@@ -57,12 +57,6 @@ export function DatasetPage() {
             if (nextLetterHandlerRef.current && nextLetterButtonElementRef.current) {
                 nextLetterButtonElementRef.current.removeEventListener('click', nextLetterHandlerRef.current);
             }
-            if (videoLoaddedHandlerRef.current && videoElementRef.current) {
-                videoElementRef.current.removeEventListener('loadeddata', videoLoaddedHandlerRef.current);
-            }
-            if (cameraChangeHandlerRef.current && cameraSelectElementRef.current) {
-                cameraSelectElementRef.current.removeEventListener('click', cameraChangeHandlerRef.current);
-            }
         };
     }, []);
 
@@ -75,8 +69,6 @@ export function DatasetPage() {
 
     async function cameraButtonHandler() {
         if (
-            !cameraSelectElementRef.current ||
-            !videoElementRef.current ||
             !dataPerLabelInputElementRef.current ||
             !nextLetterButtonElementRef.current ||
             !downloadButtonElementRef.current ||
@@ -91,7 +83,6 @@ export function DatasetPage() {
 
         const dataPerLabelInputElement = dataPerLabelInputElementRef.current;
         const nextLetterButtonElement = nextLetterButtonElementRef.current;
-        const cameraSelectElement = cameraSelectElementRef.current;
         const downloadButtonElement = downloadButtonElementRef.current;
 
         const cameraInstance = cameraInstanceRef.current;
@@ -113,32 +104,14 @@ export function DatasetPage() {
 
             const permission = await cameraInstance.requestPermission();
             if (permission) {
-                cameraInstance.createOptions();
+                const cameraOptionList = await cameraInstance.createOptions();
+                if (cameraOptionList === false) {
+                    return;
+                }
+                setCameraOption(cameraOptionList);
                 cameraInstance.start();
 
                 const handLandmarker = await mediapipeInstance.createHandLandmarker();
-
-                // Video loadded event handler
-                if (videoLoaddedHandlerRef.current) {
-                    videoElementRef.current.removeEventListener('loadeddata', videoLoaddedHandlerRef.current);
-                }
-                const videoLoaddedHandlerTemp = () => {
-                    canvasInstanceRef.current?.setWidthHeight(videoElementRef.current!.videoWidth, videoElementRef.current!.videoHeight);
-                }
-                videoLoaddedHandlerRef.current = videoLoaddedHandlerTemp;
-                videoElementRef.current.addEventListener('loadeddata', videoLoaddedHandlerRef.current);
-
-
-                // Camera change event handler
-                if (cameraChangeHandlerRef.current) {
-                    cameraSelectElement.removeEventListener('change', cameraChangeHandlerRef.current)
-                }
-                const cameraChangeHandlerTemp = (e: Event) => {
-                    const target = e.target as HTMLSelectElement;
-                    cameraInstanceRef.current!.change(target.value);
-                }
-                cameraChangeHandlerRef.current = cameraChangeHandlerTemp;
-                cameraSelectElement.addEventListener('change', cameraChangeHandlerRef.current);
 
                 let currentLetterIndex = 0;
                 const letters = [
@@ -200,9 +173,6 @@ export function DatasetPage() {
 
                 nextLetterButtonElement.classList.add('hidden');
                 downloadButtonElement.classList.add('hidden');
-
-                cameraSelectElement.innerHTML = '';
-                cameraSelectElement.classList.add('hidden');
             }
         }
     }
@@ -256,13 +226,27 @@ export function DatasetPage() {
                             }
                         </div>
                     </div>
-                    
+
                     <div className="relative w-full h-max">
-                        <video ref={videoElementRef} className="border rounded block w-full min-h-96 bg-white"></video>
+                        <video
+                            ref={videoElementRef}
+                            onLoadedData={e => canvasInstanceRef.current?.setWidthHeight(e.currentTarget.videoWidth, e.currentTarget.videoHeight)}
+                            className="border rounded block w-full min-h-96 bg-white">
+                        </video>
                         <canvas ref={canvasElementRef} className="absolute top-0 left-0 block w-full min-h-96"></canvas>
                     </div>
 
-                    <select ref={cameraSelectElementRef} name="camera-select" className="w-full mt-4 p-2 border rounded hidden"></select>
+                    <select
+                        onChange={e => cameraInstanceRef.current!.change(e.target.value)}
+                        className={`w-full mt-4 p-2 border rounded ${isCameraRunning ? 'block' : 'hidden'}`}>
+                        {
+                            cameraOption && (
+                                cameraOption.map(camera => (
+                                    <option key={camera.value} value={camera.value}>{camera.text}</option>
+                                ))
+                            )
+                        }
+                    </select>
 
                     <div className="mt-4 text-4xl font-bold">{displayText}</div>
 

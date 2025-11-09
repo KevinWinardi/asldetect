@@ -1,6 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import type { InputLayerType, LayerType, OutputLayerType } from '../types/layerType';
 import type { CompileModelType } from '../types/compileModelType';
+import { Dialog } from './Dialog';
 
 export class BaseModel {
     protected model: tf.Sequential;
@@ -138,27 +139,32 @@ export class BaseModel {
         return layer;
     }
 
-    static getAllModel(prefix: string): { key: string, name: string }[] {
-        const models = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k && k.startsWith(prefix)) {
-                const value = localStorage.getItem(k);
-                if (value) {
-                    try {
-                        const item = JSON.parse(value);
-                        if (item && typeof item.key === 'string' && typeof item.name === 'string') {
-                            models.push({
-                                key: item.key,
-                                name: item.name,
-                            });
+    static getAllModel(prefix: string): { key: string, name: string }[] | false {
+        try {
+            const models = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith(prefix)) {
+                    const value = localStorage.getItem(k);
+                    if (value) {
+                        try {
+                            const item = JSON.parse(value);
+                            if (item && typeof item.key === 'string' && typeof item.name === 'string') {
+                                models.push({
+                                    key: item.key,
+                                    name: item.name,
+                                });
+                            }
+                        } catch (error: any) {
+                            throw new Error('Something error when getting the model');
                         }
-                    } catch (error:any) {
-                        throw new Error('Something error when getting the model');
                     }
                 }
             }
+            return models;
+        } catch (error: any) {
+            Dialog.showError(error.message);
+            return false;
         }
-        return models;
     }
 }
