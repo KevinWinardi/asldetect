@@ -1,6 +1,7 @@
 import type { CompileModelType } from '../types/compileModelType';
+import type { EvaluationTrainValType } from '../types/evaluationTrainValType';
 import type { FitModelType } from '../types/fitModelType';
-import type { LayerType } from '../types/layerType';
+import type { InputLayerType, LayerModelType, OutputLayerType } from '../types/layerModelType';
 import type { SplitDataType } from '../types/splitDataType';
 import { BaseModel } from './BaseModel';
 import { Dataset } from './Dataset';
@@ -8,13 +9,7 @@ import * as tf from '@tensorflow/tfjs';
 
 export class Trainer extends BaseModel {
     private setProgress: React.Dispatch<React.SetStateAction<string>>;
-    private evaluationTrainVal: {
-        epoch: number,
-        loss: number,
-        acc: number,
-        valLoss: number,
-        valAcc: number,
-    }[] = [];
+    private evaluationTrainVal: EvaluationTrainValType = [];
     private evaluationTest = { loss: 0, acc: 0 };
 
     constructor(setProgress: React.Dispatch<React.SetStateAction<string>>) {
@@ -25,10 +20,14 @@ export class Trainer extends BaseModel {
     async startTraining(
         dataset: tf.data.CSVDataset | null,
         splitData: SplitDataType,
-        layerModel: LayerType[],
+        layerModel: LayerModelType[],
         compileModel: CompileModelType,
         fitModel: FitModelType
     ) {
+        if (!fitModel.epochs || !fitModel.batchSize) {
+            throw new Error('Epochs and batch size cannot be null');
+        }
+
         await tf.setBackend('webgl');
         await tf.ready();
         this.setProgress('Preprocessing data...');
@@ -39,9 +38,6 @@ export class Trainer extends BaseModel {
         this.createModel(layerModel, compileModel);
 
         this.setProgress('Training model...');
-        if (!fitModel.epochs || !fitModel.batchSize) {
-            throw new Error('Epochs and batch size cannot be null');
-        }
 
         await this.model.fit(xTrain, yTrain, {
             epochs: fitModel.epochs,
@@ -90,19 +86,131 @@ export class Trainer extends BaseModel {
         tf.engine().disposeVariables();
     }
 
-    async saveModel(name: string, metadata: { mean: number[]; std: number[]; label: string[] }) {
+    async saveModel({
+        name,
+        totalData,
+        splitData,
+        mean,
+        std,
+        label,
+        layerModel,
+        compileModel,
+        fitModel,
+    }: {
+        name: string,
+        totalData: number,
+        splitData: SplitDataType,
+        mean: number[],
+        std: number[],
+        label: string[],
+        layerModel: LayerModelType[],
+        compileModel: CompileModelType,
+        fitModel: FitModelType,
+    }): Promise<void> {
         const key = 'model_' + name.toLowerCase().replace(/\s+/g, '_');
         localStorage.setItem(
             key,
             JSON.stringify({
                 key: key,
                 name: name,
-                createdAt: new Date(),
+                totalData: totalData,
+                splitData: splitData,
+                mean: mean,
+                std: std,
+                label: label,
+                layerModel: layerModel,
+                compileModel: compileModel,
+                fitModel: fitModel,
                 evaluationTrainVal: this.evaluationTrainVal,
                 evaluationTest: this.evaluationTest,
-                ...metadata,
+                createdAt: new Date(),
             }),
         );
         await this.model.save(`localstorage://${key}`);
+        // this.model.save('downloads://model_default');
+        // const blob = new Blob([JSON.stringify({
+        //     key: key,
+        //     name: name,
+        //     totalData: totalData,
+        //     splitData: splitData,
+        //     mean: mean,
+        //     std: std,
+        //     label: label,
+        //     layerModel: layerModel,
+        //     compileModel: compileModel,
+        //     fitModel: fitModel,
+        //     evaluationTrainVal: this.evaluationTrainVal,
+        //     evaluationTest: this.evaluationTest,
+        //     createdAt: new Date(),
+        // }, null, 2)], { type: 'application/json' });
+        // const url = URL.createObjectURL(blob);
+
+        // const a = document.createElement('a');
+        // a.href = url;
+        // a.download = 'model_default_information.json';
+        // document.body.appendChild(a);
+        // a.click();
+        // document.body.removeChild(a);
     }
+
+
+    static initLayer(): LayerModelType[] {
+        const inputLayer: InputLayerType = {
+            id: crypto.randomUUID(),
+            type: 'inputLayer',
+            input_shape: [63],
+        }
+
+        const outputLayer: OutputLayerType = {
+            id: crypto.randomUUID(),
+            type: 'output',
+            units: 26,
+            activation: 'softmax',
+        }
+
+        return [inputLayer, outputLayer];
+    }
+
+    static recommendedLayer(): LayerModelType[] {
+        const layer: LayerModelType[] = [];
+
+        const initLayers = this.initLayer();
+        layer.push(...initLayers);
+
+        const hiddenLayers: LayerModelType[] = [
+            {
+                id: crypto.randomUUID(),
+                type: 'dense',
+                activation: 'relu',
+                units: 64,
+            },
+            {
+                id: crypto.randomUUID(),
+                type: 'batchNormalization',
+                epsilon: 0.001,
+                momentum: 0.99,
+            },
+            {
+                id: crypto.randomUUID(),
+                type: 'dropout',
+                rate: 0.4,
+            },
+            {
+                id: crypto.randomUUID(),
+                type: 'dense',
+                activation: 'relu',
+                units: 32,
+            },
+
+            {
+                id: crypto.randomUUID(),
+                type: 'dropout',
+                rate: 0.5,
+            },
+        ]
+
+        layer.splice(layer.length - 1, 0, ...hiddenLayers);
+        return layer;
+    }
+
 }

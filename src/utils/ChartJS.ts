@@ -1,34 +1,21 @@
 import { Chart } from "chart.js/auto";
 import type { SplitDataType } from "../types/splitDataType";
+import type { EvaluationTrainValType } from "../types/evaluationTrainValType";
 
 export class ChartJS {
-    createEvalChart(
+    static createEvalChart({
+        element,
+        type,
+        data,
+    }: {
         element: HTMLCanvasElement | null,
         type: 'acc' | 'loss',
-        data: { epoch: number, loss: number, acc: number, valLoss: number, valAcc: number }[]
-    ) {
+        data: EvaluationTrainValType
+    }) {
         if (!element) throw new Error('Canvas not found');
-
-        const existing = Chart.getChart(element);
-        if (existing) {
-            existing.destroy();
-        }
 
         const datasets = type === 'acc'
             ? [
-                {
-                    label: 'Loss',
-                    data: data.map(row => row.loss),
-                    borderColor: '#FF0000',
-                },
-                {
-                    label: 'Val Loss',
-                    data: data.map(row => row.valLoss),
-                    borderColor: '#8B0000',
-                },
-            ]
-            :
-            [
                 {
                     label: 'Acc',
                     data: data.map(row => row.acc),
@@ -39,7 +26,26 @@ export class ChartJS {
                     data: data.map(row => row.valAcc),
                     borderColor: '#005601',
                 },
+            ]
+            : [
+                {
+                    label: 'Loss',
+                    data: data.map(row => row.loss),
+                    borderColor: '#FF0000',
+                },
+                {
+                    label: 'Val Loss',
+                    data: data.map(row => row.valLoss),
+                    borderColor: '#8B0000',
+                },
             ];
+
+        const existing = Chart.getChart(element);
+        if (existing) {
+            existing.data.datasets = datasets;
+            existing.update('active');
+            return existing;
+        }
 
         return new Chart(
             element,
@@ -61,10 +67,13 @@ export class ChartJS {
         )
     }
 
-    static createSplitDataChart(
+    static createSplitDataChart({
+        element,
+        splitData,
+    }: {
         element: HTMLCanvasElement | null,
         splitData: SplitDataType,
-    ) {
+    }) {
         if (!element) throw new Error('Canvas not found');
 
         const existing = Chart.getChart(element);
@@ -82,7 +91,7 @@ export class ChartJS {
             existing.update('active');
             return existing;
         }
-        
+
         return new Chart(
             element,
             {

@@ -1,7 +1,10 @@
 import * as tf from '@tensorflow/tfjs';
-import type { InputLayerType, LayerType, OutputLayerType } from '../types/layerType';
+import type { InputLayerType, LayerModelType, OutputLayerType } from '../types/layerModelType';
 import type { CompileModelType } from '../types/compileModelType';
 import { Dialog } from './Dialog';
+import type { EvaluationTrainValType } from '../types/evaluationTrainValType';
+import type { evaluationTestType } from '../types/evaluationTestType';
+import type { FitModelType } from '../types/fitModelType';
 
 export class BaseModel {
     protected model: tf.Sequential;
@@ -10,7 +13,7 @@ export class BaseModel {
         this.model = tf.sequential();
     }
 
-    createModel(layerModel: LayerType[], compileModel: CompileModelType): void {
+    createModel(layerModel: LayerModelType[], compileModel: CompileModelType): void {
         try {
             this.model = tf.sequential();
 
@@ -61,82 +64,53 @@ export class BaseModel {
         }
     }
 
-    static async loadASLMetadata(keyName?: string) {
+    static async loadInformationModel(currentKeyModel: string): Promise<{
+        key: string,
+        name: string,
+        totalData: number,
+        splitData: {
+            train: number,
+            val: number,
+            test: number,
+        },
+        mean: tf.Tensor1D
+        std: tf.Tensor1D
+        label: string[],
+        layerModel: LayerModelType[],
+        compileModel: CompileModelType,
+        fitModel: FitModelType,
+        evaluationTrainVal: EvaluationTrainValType,
+        evaluationTest: evaluationTestType,
+        createdAt: string,
+    }> {
         let data;
-        if (keyName) {
-            const res = localStorage.getItem(keyName);
-            if (!res) throw new Error(`No metadata found for key: ${keyName}`);
-            data = JSON.parse(res);
-        } else {
-            const res = await fetch('asl_metadata.json');
-            if (!res.ok) throw new Error('Failed to load asl_metadata.json');
+        if (currentKeyModel === 'model_default') {
+            const res = await fetch('model_default_information.json');
             data = await res.json();
+        } else {
+            const res = localStorage.getItem(currentKeyModel);
+            console.log(res)
+            if (!res) {
+                throw new Error('No model found');
+            }
+            data = JSON.parse(res);
         }
 
         return {
+            key: data.key,
+            name: data.name,
+            totalData: data.totalData,
+            splitData: data.splitData,
             mean: tf.tensor1d(data.mean),
             std: tf.tensor1d(data.std),
             label: data.label,
+            layerModel: data.layerModel,
+            compileModel: data.compileModel,
+            fitModel: data.fitModel,
+            evaluationTrainVal: data.evaluationTrainVal,
+            evaluationTest: data.evaluationTest,
+            createdAt: data.createdAt,
         };
-    }
-
-    static initLayer(): LayerType[] {
-        const inputLayer: InputLayerType = {
-            id: crypto.randomUUID(),
-            type: 'inputLayer',
-            input_shape: [63],
-        }
-
-        const outputLayer: OutputLayerType = {
-            id: crypto.randomUUID(),
-            type: 'output',
-            units: 26,
-            activation: 'softmax',
-        }
-
-        return [inputLayer, outputLayer];
-    }
-
-    static recommendedLayer(): LayerType[] {
-        const layer: LayerType[] = [];
-
-        const initLayers = this.initLayer();
-        layer.push(...initLayers);
-
-        const hiddenLayers: LayerType[] = [
-            {
-                id: crypto.randomUUID(),
-                type: 'dense',
-                activation: 'relu',
-                units: 64,
-            },
-            {
-                id: crypto.randomUUID(),
-                type: 'batchNormalization',
-                epsilon: 0.001,
-                momentum: 0.99,
-            },
-            {
-                id: crypto.randomUUID(),
-                type: 'dropout',
-                rate: 0.4,
-            },
-            {
-                id: crypto.randomUUID(),
-                type: 'dense',
-                activation: 'relu',
-                units: 32,
-            },
-
-            {
-                id: crypto.randomUUID(),
-                type: 'dropout',
-                rate: 0.5,
-            },
-        ]
-
-        layer.splice(layer.length - 1, 0, ...hiddenLayers);
-        return layer;
     }
 
     static getAllModel(prefix: string): { key: string, name: string }[] | false {

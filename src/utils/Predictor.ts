@@ -3,24 +3,32 @@ import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import * as tf from '@tensorflow/tfjs';
 
 export class Predictor extends BaseModel {
-    static predict(
+    static predict({
+        landmarks,
+        mean,
+        std,
+        label,
+        model,
+    }: {
         landmarks: NormalizedLandmark[],
-        metadata: { mean: tf.Tensor1D; std: tf.Tensor1D; label: string[] },
+        mean: tf.Tensor1D,
+        std: tf.Tensor1D,
+        label: string[],
         model: tf.LayersModel,
-    ): string {
+    }): string {
         return tf.tidy(() => {
             const input = tf.tensor1d(landmarks.flatMap(p => [p.x, p.y, p.z]));
-            const standardized = input.sub(metadata.mean).div(metadata.std).reshape([1, -1]);
+            const standardized = input.sub(mean).div(std).reshape([1, -1]);
             const output = model.predict(standardized) as tf.Tensor;
             const probs = output.dataSync();
             const maxIdx = probs.indexOf(Math.max(...probs));
-            return probs[maxIdx] > 0.7 ? metadata.label[maxIdx] : '???';
+            return probs[maxIdx] > 0.7 ? label[maxIdx] : '???';
         });
     }
 
-    static async loadModelFromStorage(keyName: string): Promise<tf.LayersModel> {
+    static async loadModel(keyName: string): Promise<tf.LayersModel> {
         if (keyName === 'default') {
-            return await tf.loadLayersModel('./asl_model.json');
+            return await tf.loadLayersModel('./model_default.json');
         }
         return await tf.loadLayersModel(`localstorage://${keyName}`);
     }

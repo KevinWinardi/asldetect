@@ -2,8 +2,8 @@ import type React from "react";
 import { useState } from "react";
 import { Dialog } from "../../utils/Dialog";
 import { Tooltip } from "../../components/Tooltip";
-import { BaseModel } from "../../utils/BaseModel";
-import type { BatchNormalizationLayerType, DenseLayerType, DropoutLayerType, LayerType } from "../../types/layerType";
+import type { BatchNormalizationLayerType, DenseLayerType, DropoutLayerType, LayerModelType } from "../../types/layerModelType";
+import { Trainer } from "../../utils/Trainer";
 
 function InformationHelper() {
     return (
@@ -63,8 +63,8 @@ export function Step3Page({
 }: {
     isStep3Valid: { [key: string]: boolean | null },
     setIsStep3Valid: React.Dispatch<React.SetStateAction<{ [key: string]: boolean | null }>>,
-    layerModel: LayerType[],
-    setLayerModel: React.Dispatch<React.SetStateAction<LayerType[]>>,
+    layerModel: LayerModelType[],
+    setLayerModel: React.Dispatch<React.SetStateAction<LayerModelType[]>>,
 }) {
     const [isOpenOptionLayer, setIsOpenOptionLayer] = useState(false);
 
@@ -131,7 +131,7 @@ export function Step3Page({
         }
     }
 
-    function renderLayer(layer: LayerType) {
+    function renderLayer(layer: LayerModelType) {
         switch (layer.type) {
             case 'dense':
                 return (
@@ -201,7 +201,7 @@ export function Step3Page({
                                                 setLayerModel(prev =>
                                                     prev.map(l =>
                                                         l.id === layer.id && l.type === 'dense'
-                                                            ? ({ ...l, activation: value } as LayerType)
+                                                            ? ({ ...l, activation: value } as LayerModelType)
                                                             : l
                                                     )
                                                 );
@@ -496,7 +496,7 @@ export function Step3Page({
                 <div className="flex justify-center mt-8">
                     <button
                         onClick={() => {
-                            const recommendedLayer: LayerType[] = BaseModel.recommendedLayer();
+                            const recommendedLayer: LayerModelType[] = Trainer.recommendedLayer();
                             setIsStep3Valid({});
                             recommendedLayer.forEach(item => {
                                 switch (item.type) {

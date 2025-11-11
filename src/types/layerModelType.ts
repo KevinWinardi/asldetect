@@ -31,4 +31,4 @@ export type OutputLayerType = {
     activation: 'softmax',
 }
 
-export type LayerType = InputLayerType | DenseLayerType | BatchNormalizationLayerType | DropoutLayerType | OutputLayerType;
+export type LayerModelType = InputLayerType | DenseLayerType | BatchNormalizationLayerType | DropoutLayerType | OutputLayerType;

@@ -33,11 +33,14 @@ export function Step2Page({
     splitData: SplitDataType,
     setSplitData: React.Dispatch<React.SetStateAction<SplitDataType>>,
 }) {
-    const splitDataCanvasElementRef = useRef<HTMLCanvasElement|null>(null);
+    const splitDataCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
         const values = [splitData.train, splitData.val, splitData.test];
-        ChartJS.createSplitDataChart(splitDataCanvasElementRef.current, splitData);
+        ChartJS.createSplitDataChart({
+            element: splitDataCanvasElementRef.current,
+            splitData: splitData,
+        });
 
         if (values.some(v => v === null)) {
             setIsStep2Valid(null);

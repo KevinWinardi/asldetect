@@ -10,12 +10,14 @@ export function Step1Page({
     isStep1Valid,
     setIsStep1Valid,
     tensorflowfDatasetRef,
-    datasetInputElementRef,
+    totalData,
+    setTotalData,
 }: {
     isStep1Valid: boolean
     setIsStep1Valid: React.Dispatch<React.SetStateAction<boolean>>
-    tensorflowfDatasetRef: React.RefObject<tf.data.CSVDataset | null>
-    datasetInputElementRef: React.RefObject<HTMLInputElement | null>
+    tensorflowfDatasetRef: React.RefObject<tf.data.CSVDataset | null>,
+    totalData: number,
+    setTotalData: React.Dispatch<React.SetStateAction<number>>,
 }) {
     const [previewData, setPreviewData] = useState<string[][]>([]);
     const [isUploading, setIsUploading] = useState(false);
@@ -43,9 +45,11 @@ export function Step1Page({
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     const text = e.target?.result as string;
-                    const rows = text.split(/\r?\n/).slice(0, 11);
-                    const parsed = rows.map(r => r.split(','));
-                    setPreviewData(parsed);
+                    const rows = text.split(/\r?\n/);
+                    const preview = rows.slice(0, 11).map(r => r.split(','));
+                    setPreviewData(preview);
+
+                    setTotalData(rows.length-1);
                 }
                 reader.readAsText(file);
 
@@ -53,7 +57,7 @@ export function Step1Page({
                 setIsUploading(false);
             }
         } catch (error: any) {
-            Dialog.closeDialog();
+            setIsUploading(false);
             return Dialog.showError(error.message);
         }
     }
@@ -69,11 +73,10 @@ export function Step1Page({
                     w-full h-full flex flex-col justify-center items-center gap-4 
                     font-semibold text-gray-500 cursor-pointer transition-opacity hover:opacity-50">
                         <i className={`fa-solid ${isStep1Valid ? 'fa-rotate' : 'fa-upload'} text-4xl`}></i>
-                        {isStep1Valid ? 'Data successfully loadded ✅' : 'Upload your dataset file file'}
+                        {isStep1Valid ? `Data successfully loaded ${totalData.toLocaleString('id-ID') ?? ''}✅` : 'Upload your dataset file file'}
                     </label>
                     <input
                         onChange={(e) => uploadDataset(e)}
-                        ref={datasetInputElementRef}
                         id="dataset-input"
                         type="file"
                         accept=".csv"

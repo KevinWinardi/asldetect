@@ -8,7 +8,7 @@ import { BaseModel } from "../utils/BaseModel";
 export function DetectionPage() {
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [displayText, setDisplayText] = useState('');
-    const [keyModel, setKeyModel] = useState('');
+    const [currentKeyModel, setCurrentKeyModel] = useState(localStorage.getItem('favorite_model') ?? 'model_default');
     const [modelOption, setModelOption] = useState<{
         key: string,
         name: string,
@@ -30,9 +30,6 @@ export function DetectionPage() {
             Dialog.showError('Some ref not found');
             return;
         }
-
-        const defaultUseModel = localStorage.getItem('default_use_model') ?? 'default';
-        setKeyModel(defaultUseModel);
 
         const modelOptionList = BaseModel.getAllModel('model_');
         if (modelOptionList === false) {
@@ -91,8 +88,16 @@ export function DetectionPage() {
                 cameraInstance.start();
 
                 const handLandmarker = await mediapipeInstance.createHandLandmarker();
-                const aslMetadata = await BaseModel.loadASLMetadata();
-                await cameraInstance.predictionLoop(setDisplayText, handLandmarker, canvasInstance, aslMetadata, keyModel);
+                const { mean, std, label } = await BaseModel.loadInformationModel(currentKeyModel);
+                await cameraInstance.predictionLoop({
+                    setDisplayText,
+                    handLandmarker,
+                    canvasInstance,
+                    mean,
+                    std,
+                    label,
+                    currentKeyModel,
+                });
             }
         } else {
             const confirmation = await Dialog.showConfirmation('Are you sure want to stop camera stream?');
@@ -126,8 +131,11 @@ export function DetectionPage() {
                     <div className="mb-4 p-4 flex flex-col gap-4 w-full bg-white border rounded shadow-2xl">
                         <label htmlFor="model-select" className="font-semibold text-gray-700">Select model</label>
                         <select
+                            value={currentKeyModel}
+                            id="model-select"
                             disabled={isCameraRunning}
-                            onChange={(e) => setKeyModel(e.target.value)} name="model-select"
+                            onChange={(e) => setCurrentKeyModel(e.target.value)}
+                            name="model-select"
                             className={`w-full mb-4 p-2 border rounded disabled:opacity-75 disabled:cursor-not-allowed`}>
                             <option value="default">Default</option>
                             {
@@ -169,7 +177,7 @@ export function DetectionPage() {
                             mt-4 px-4 py-2 font-bold text-white ${isCameraRunning ? 'bg-red-500' : 'bg-blue-500'} border-b-4 border-black
                             rounded cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                         `}>
-                        {isCameraRunning ? 'Stop Camera' : 'Start Camera'} <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i>
+                        <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i> {isCameraRunning ? 'Stop Camera' : 'Start Camera'}
                     </button>
 
                     <div className="mt-12 flex flex-col items-center gap-4 w-full max-w-sm">

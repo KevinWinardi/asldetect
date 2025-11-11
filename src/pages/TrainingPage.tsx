@@ -1,30 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import * as tf from '@tensorflow/tfjs';
-import { Step1Page } from "./StepTrainings/Step1Page";
-import { Step2Page } from "./StepTrainings/Step2Page";
-import { Step3Page } from "./StepTrainings/Step3Page";
-import type { LayerType } from "../types/layerType";
+import { Step1Page } from "./TrainingSteps/Step1Page";
+import { Step2Page } from "./TrainingSteps/Step2Page";
+import { Step3Page } from "./TrainingSteps/Step3Page";
+import type { LayerModelType } from "../types/layerModelType";
 import type { SplitDataType } from "../types/splitDataType";
-import { Step4Page } from "./StepTrainings/Step4Page";
-import { Step5Page } from "./StepTrainings/Step5Page";
+import { Step4Page } from "./TrainingSteps/Step4Page";
+import { Step5Page } from "./TrainingSteps/Step5Page";
 import type { CompileModelType } from "../types/compileModelType";
 import { BaseModel } from "../utils/BaseModel";
 import type { FitModelType } from "../types/fitModelType";
+import { Trainer } from "../utils/Trainer";
 
 export function TrainingPage() {
-    const datasetInputElementRef = useRef<HTMLInputElement | null>(null);
-
     const tensorflowfDatasetRef = useRef<tf.data.CSVDataset | null>(null);
 
     const [currentIndexStep, setCurrentIndexStep] = useState(0);
     const [isTraining, setIsTraining] = useState(false);
 
+    const [totalData, setTotalData] = useState(0);
     const [splitData, setSplitData] = useState<SplitDataType>({
         train: null,
         val: null,
         test: null,
     });
-    const [layerModel, setLayerModel] = useState<LayerType[]>([]);
+    const [layerModel, setLayerModel] = useState<LayerModelType[]>([]);
     const [compileModel, setCompileModel] = useState<CompileModelType>({
         optimizer: null,
         learningRate: null,
@@ -57,7 +57,7 @@ export function TrainingPage() {
     });
 
     useEffect(() => {
-        setLayerModel(BaseModel.initLayer());
+        setLayerModel(Trainer.initLayer());
     }, [])
 
     function isNextButtonDisabled() {
@@ -73,7 +73,8 @@ export function TrainingPage() {
             isStep1Valid={isStep1Valid}
             setIsStep1Valid={setIsStep1Valid}
             tensorflowfDatasetRef={tensorflowfDatasetRef}
-            datasetInputElementRef={datasetInputElementRef}
+            totalData={totalData}
+            setTotalData={setTotalData}
         />,
         <Step2Page
             isStep2Valid={isStep2Valid}
@@ -99,6 +100,7 @@ export function TrainingPage() {
             fitModel={fitModel}
             setFitModel={setFitModel}
             tensorflowDataset={tensorflowfDatasetRef.current}
+            totalData={totalData}
             splitData={splitData}
             layerModel={layerModel}
             compileModel={compileModel}

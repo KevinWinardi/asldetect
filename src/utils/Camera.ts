@@ -146,23 +146,24 @@ export class Camera {
                     const results = handLandmarker.detectForVideo(this.videoElement, startTimeMs);
                     canvasInstance.clear();
 
-                    const tempRow = [];
                     if (results.landmarks.length != 0) {
-                        for (const landmarks of results.landmarks) {
-                            if (landmarks.every(item => item != null)) {
-                                canvasInstance.drawLandmark(landmarks);
-                                if (landmarks.every(lm => lm && lm.x != null && lm.y != null && lm.z != null)) {
-                                    for (const landmark of landmarks) {
-                                        tempRow.push(landmark.x, landmark.y, landmark.z);
-                                    }
-                                }
+                        const landmarks = results.landmarks[0]; // get first hands
+                        if (landmarks.every(lm => lm && lm.x != null && lm.y != null && lm.z != null)) {
+                            canvasInstance.drawLandmark(landmarks);
+
+                            const tempRow = [];
+                            for (const landmark of landmarks) {
+                                tempRow.push(landmark.x, landmark.y, landmark.z);
+                            }
+
+                            if (tempRow.length === 63) {
+                                tempRow.push(currentLetter);
+                                datasetInstance!.addDataToArray(tempRow);
+                                ++currentDataPerLabel;
+                                setDisplayText(`${currentLetter}: ${currentDataPerLabel} data`);
                             }
                         }
-                        tempRow.push(currentLetter);
-                        datasetInstance!.addDataToArray(tempRow);
-                        ++currentDataPerLabel;
 
-                        setDisplayText(`${currentLetter}: ${currentDataPerLabel} data`);
                     }
 
                     if (currentDataPerLabel < dataPerLabel) {
@@ -181,18 +182,24 @@ export class Camera {
         });
     }
 
-    async predictionLoop(
+    async predictionLoop({
+        setDisplayText,
+        handLandmarker,
+        canvasInstance,
+        mean,
+        std,
+        label,
+        currentKeyModel,
+    }: {
         setDisplayText: React.Dispatch<React.SetStateAction<string>>,
         handLandmarker: HandLandmarker | undefined,
         canvasInstance: Canvas | null,
-        aslMetadata: {
-            mean: tf.Tensor1D,
-            std: tf.Tensor1D,
-            label: [],
-        },
-        keyModel: string,
-    ): Promise<void> {
-        const loadModel = await Predictor.loadModelFromStorage(keyModel);
+        mean: tf.Tensor1D,
+        std: tf.Tensor1D,
+        label: string[],
+        currentKeyModel: string,
+    }): Promise<void> {
+        const model = await Predictor.loadModel(currentKeyModel);
 
         return new Promise((_, reject) => {
             const loop = () => {
@@ -214,11 +221,16 @@ export class Camera {
                     canvasInstance.clear();
 
                     if (results.landmarks.length != 0) {
-                        for (const landmarks of results.landmarks) {
-                            canvasInstance.drawLandmark(landmarks);
-                            const predictedLabel = Predictor.predict(landmarks, aslMetadata, loadModel);
-                            setDisplayText(predictedLabel);
-                        }
+                        const landmarks = results.landmarks[0]; // get first hands
+                        canvasInstance.drawLandmark(landmarks);
+                        const predictedLabel = Predictor.predict({
+                            landmarks,
+                            mean,
+                            std,
+                            label,
+                            model
+                        });
+                        setDisplayText(predictedLabel);
                     }
                 } catch (error: any) {
                     Dialog.showError(error.message);

@@ -152,6 +152,9 @@ export function DatasetPage() {
                     nextLetterButtonElement.removeEventListener('click', nextLetterHandlerRef.current);
                 }
                 const nextLetterHandlerTemp = async () => {
+                    setTimeout(() => {
+                        
+                    }, 1000);
                     ++currentLetterIndex;
                     setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
                     await callGenerateDatasetLoop();
@@ -268,7 +271,7 @@ export function DatasetPage() {
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}
                     >
-                        <i className="fa-solid fa-download"></i> Download Dataset (.csv)
+                        Download Dataset (.csv) <i className="fa-solid fa-download"></i> 
                     </button>
 
                     <button
@@ -279,7 +282,7 @@ export function DatasetPage() {
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        {isCameraRunning ? 'Stop Camera' : 'Start Camera'} <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i>
+                        <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i> {isCameraRunning ? 'Stop Camera' : 'Start Camera'} 
                     </button>
                 </section>
             </div>
