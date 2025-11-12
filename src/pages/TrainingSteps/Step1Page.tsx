@@ -5,6 +5,7 @@ import { Dialog } from "../../utils/Dialog";
 import { Dataset } from "../../utils/Dataset";
 import * as tf from '@tensorflow/tfjs';
 import type React from "react";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export function Step1Page({
     isStep1Valid,
@@ -12,24 +13,25 @@ export function Step1Page({
     tensorflowfDatasetRef,
     totalData,
     setTotalData,
+    previewData,
+    setPreviewData,
 }: {
     isStep1Valid: boolean
     setIsStep1Valid: React.Dispatch<React.SetStateAction<boolean>>
     tensorflowfDatasetRef: React.RefObject<tf.data.CSVDataset | null>,
     totalData: number,
     setTotalData: React.Dispatch<React.SetStateAction<number>>,
+    previewData: string[][],
+    setPreviewData: React.Dispatch<React.SetStateAction<string[][]>>
 }) {
-    const [previewData, setPreviewData] = useState<string[][]>([]);
+    const { t } = useLanguage();
     const [isUploading, setIsUploading] = useState(false);
 
     async function uploadDataset(e: ChangeEvent<HTMLInputElement>): Promise<void | SweetAlertResult<any>> {
         try {
             const target = e.target as HTMLInputElement;
-            if (!target.files || target.files.length == 0) {
-                return Dialog.showWarning('Please upload 1 file csv');
-            }
-            if (target.files.length > 1) {
-                return Dialog.showWarning('Input only accept 1 file');
+            if (!target.files || target.files.length == 0 || target.files.length > 1) {
+                return Dialog.showWarning(t.oneCsvFile);
             }
 
             const file = target.files[0];
@@ -49,7 +51,7 @@ export function Step1Page({
                     const preview = rows.slice(0, 11).map(r => r.split(','));
                     setPreviewData(preview);
 
-                    setTotalData(rows.length-1);
+                    setTotalData(rows.length - 1);
                 }
                 reader.readAsText(file);
 
@@ -64,7 +66,7 @@ export function Step1Page({
 
     return (
         <>
-            <h2 className="font-bold text-2xl text-gray-700">1. Upload your dataset file</h2>
+            <h2 className="font-bold text-2xl text-gray-700">1. {t.uploadDatasetFile}</h2>
 
             <section>
                 <div className={`relative flex justify-center items-center w-full min-h-48 mt-4 border-2 border-dashed transition duration-500 
@@ -73,7 +75,7 @@ export function Step1Page({
                     w-full h-full flex flex-col justify-center items-center gap-4 
                     font-semibold text-gray-500 cursor-pointer transition-opacity hover:opacity-50">
                         <i className={`fa-solid ${isStep1Valid ? 'fa-rotate' : 'fa-upload'} text-4xl`}></i>
-                        {isStep1Valid ? `Data successfully loaded ${totalData.toLocaleString('id-ID') ?? ''}✅` : 'Upload your dataset file file'}
+                        {isStep1Valid ? `${t.dataSuccessLoad} ${totalData.toLocaleString('id-ID') ?? ''}✅` : t.uploadDatasetFile}
                     </label>
                     <input
                         onChange={(e) => uploadDataset(e)}
@@ -83,13 +85,13 @@ export function Step1Page({
                         className="hidden" />
                 </div>
                 <span className="mt-2 text-sm italic opacity-75">
-                    Don't have dataset? <Link to='/dataset' className="font-semibold text-blue-500 underline transition-opacity hover:opacity-75">Click here</Link>
+                    {t.dontHaveDataset} <Link to='/dataset' className="font-semibold text-blue-500 underline transition-opacity hover:opacity-75">{t.clickHere}</Link>
                 </span>
 
                 <div className={`${isUploading ? 'block' : 'hidden'} mt-2 mx-auto w-max p-2 border rounded-md shadow-lg`}>
                     <div className="flex justify-center items-center'">
                         <div className="w-[30px] aspect-square rounded-full border-4 border-blue-500 border-r-gray-500 animate-spin"></div>
-                        <span className="ml-2 line-clamp-1 text-ellipsis">Uploading dataset...</span>
+                        <span className="ml-2 line-clamp-1 text-ellipsis">{t.uploadDataset}</span>
                     </div>
                 </div>
             </section>

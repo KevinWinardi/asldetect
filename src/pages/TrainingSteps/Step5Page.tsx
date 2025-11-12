@@ -8,6 +8,7 @@ import { ChartJS } from "../../utils/ChartJS";
 import { Tooltip } from "../../components/Tooltip";
 import type { FitModelType } from "../../types/fitModelType";
 import { Trainer } from "../../utils/Trainer";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export function Step5Page({
     isStep5Valid,
@@ -43,6 +44,7 @@ export function Step5Page({
     isTraining: boolean,
     setIsTraining: React.Dispatch<React.SetStateAction<boolean>>,
 }) {
+    const { t } = useLanguage();
     const [progress, setProgress] = useState('');
     const [isFirstTraining, setIsFirstTraining] = useState(true);
     const [evalTest, setEvalTest] = useState<{ acc: number, loss: number } | null>(null);
@@ -74,7 +76,7 @@ export function Step5Page({
     async function startTrainingHandler() {
         try {
             if (!trainerInstanceRef.current) {
-                return Dialog.showError('Model instance not found');
+                return Dialog.showError(t.refNotFound);
             }
 
             Dialog.closeDialog();
@@ -99,12 +101,14 @@ export function Step5Page({
             ChartJS.createEvalChart({
                 element: accTrainValCanvasElementRef.current,
                 type: 'acc',
-                data: evaluationTrainVal
+                data: evaluationTrainVal,
+                title: t.evalPlot,
             });
             ChartJS.createEvalChart({
                 element: lossTrainValCanvasElementRef.current,
                 type: 'loss',
-                data: evaluationTrainVal
+                data: evaluationTrainVal,
+                title: t.evalPlot, 
             });
             setIsFirstTraining(false);
         } catch (error: any) {
@@ -115,7 +119,7 @@ export function Step5Page({
     }
 
     async function stopTrainingHandler() {
-        const confirmation = await Dialog.showConfirmation('Are you sure want to stop the training process?');
+        const confirmation = await Dialog.showConfirmation(t.stopTraining);
         if (confirmation.isConfirmed) {
             trainerInstanceRef.current?.stopTraining();
         }
@@ -124,18 +128,18 @@ export function Step5Page({
     async function saveModelHandler(): Promise<void> {
         try {
             if (!trainerInstanceRef.current || !evalTest) {
-                throw new Error('Some ref not found');
+                throw new Error(t.refNotFound);
             }
             const name = await Dialog.showInput({
-                title: 'Model name',
-                inputLabel: 'Input your model name',
-                inputPlaceholder: 'Your model name',
+                title: t.modelName,
+                inputLabel: t.inputModelName,
+                inputPlaceholder: 'Model',
                 input: 'text',
                 inputValidator: (value) => {
                     const localStorageKeys = Object.keys(localStorage);
 
                     if (localStorageKeys.includes('model_' + value.split(' ').join('_')) || value === 'default') {
-                        return 'This name already used, please use another name';
+                        return t.nameModelUsed;
                     } else {
                         setIsModelSaved(true);
                         return;
@@ -147,7 +151,7 @@ export function Step5Page({
                 return;
             }
 
-            Dialog.showSuccess('Model saved to local storage');
+            Dialog.showSuccess(t.successSaveModel);
 
             trainerInstanceRef.current.saveModel({
                 name: name,
@@ -168,10 +172,10 @@ export function Step5Page({
 
     return (
         <>
-            <h2 className="font-bold text-2xl text-left text-gray-700">5. Start training</h2>
+            <h2 className="font-bold text-2xl text-left text-gray-700">5. {t.startTraining}</h2>
 
             <section className="mt-4">
-                <p>Last step is set up configuration for fit model.</p>
+                <p>{t.fitInfo}</p>
             </section>
 
             <section className="mt-4">
@@ -210,11 +214,11 @@ export function Step5Page({
                                 type="number"
                                 min={1}
                                 className="w-full p-2 border rounded-se rounded-ee" />
-                            <Tooltip text="An epoch is one complete pass of the entire training dataset through the model during training (e.g. 10)" />
+                            <Tooltip text={t.epochsInfo} />
                         </div>
                         {
                             isStep5Valid.epochs === false && (
-                                <p className="text-red-500 text-sm">Input must be positive integer number (e.g. 10)</p>
+                                <p className="text-red-500 text-sm">{t.epochsInvalid}</p>
                             )
                         }
                     </div>
@@ -248,11 +252,11 @@ export function Step5Page({
                                 type="number"
                                 min={1}
                                 className="w-full p-2 border rounded-se rounded-ee" />
-                            <Tooltip text="Batch size is the number of training samples the model processes before updating its weights once during training (e.g. 32)" />
+                            <Tooltip text={t.batchSizeInfo} />
                         </div>
                         {
                             isStep5Valid.batchSize === false && (
-                                <p className="text-red-500 text-sm">Input must be positive integer number (e.g. 32)</p>
+                                <p className="text-red-500 text-sm">{t.batchSizeInvalid}</p>
                             )
                         }
                     </div>
@@ -273,7 +277,7 @@ export function Step5Page({
                         ${isTraining ? 'hidden' : 'block'} mx-auto mt-8 px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
                         cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                     `}>
-                    <i className="fa-solid fa-star"></i> Use recommended
+                    <i className="fa-solid fa-star"></i> {t.useRecomend}
                 </button>
             </section>
 
@@ -287,7 +291,7 @@ export function Step5Page({
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        {isFirstTraining ? 'Start' : 'Retrain'} <i className={`fa-solid ${isFirstTraining ? 'fa-play' : 'fa-rotate'}`}></i>
+                        <i className={`fa-solid ${isFirstTraining ? 'fa-play' : 'fa-rotate'}`}></i> {isFirstTraining ? t.start : t.retrain}
                     </button>
 
                     <button
@@ -298,7 +302,7 @@ export function Step5Page({
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        Save Model <i className="fa-solid fa-save"></i>
+                        <i className="fa-solid fa-save"></i> {t.save} Model
                     </button>
                 </div>
 
@@ -315,7 +319,7 @@ export function Step5Page({
                     ${isTraining ? 'block' : 'hidden'} mx-auto mt-4 px-4 py-2 font-bold text-white bg-red-500 border-b-4 border-black rounded
                     cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                 `}>
-                    <i className="fa-solid fa-stop"></i> Stop
+                    <i className="fa-solid fa-stop"></i> {t.stop}
                 </button>
             </section >
 
@@ -324,8 +328,8 @@ export function Step5Page({
                 <canvas ref={lossTrainValCanvasElementRef}></canvas>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                    <p className="p-2 text-green-500 border rounded shadow">Acc Test: {evalTest?.acc.toFixed(4)}</p>
-                    <p className="p-2 text-red-500 border rounded shadow">Loss Test: {evalTest?.loss.toFixed(4)}</p>
+                    <p className="p-2 text-green-500 border rounded shadow">{t.accTest}: {evalTest?.acc.toFixed(4)}</p>
+                    <p className="p-2 text-red-500 border rounded shadow">{t.lossTest}: {evalTest?.loss.toFixed(4)}</p>
                 </div>
             </section>
         </>

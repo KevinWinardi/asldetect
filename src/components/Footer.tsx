@@ -1,7 +1,10 @@
+import { useLanguage } from "../contexts/LanguageContext";
+
 export function Footer() {
+    const { t } = useLanguage();
     return (
         <footer className="py-4 font-bold text-center bg-white shadow-xl">
-            Copyright @ 2025
+            {t.copyright} @ 2025
         </footer>
     );
 }

@@ -4,29 +4,31 @@ import { Dialog } from "../../utils/Dialog";
 import { Tooltip } from "../../components/Tooltip";
 import type { BatchNormalizationLayerType, DenseLayerType, DropoutLayerType, LayerModelType } from "../../types/layerModelType";
 import { Trainer } from "../../utils/Trainer";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 function InformationHelper() {
+    const { t } = useLanguage();
     return (
         <section className="flex flex-col gap-4 mt-4">
-            <p>A Sequential model is a simple neural network where layers are stacked in order, passing data from one layer directly to the next.</p>
+            <p>{t.sequentialInfo}</p>
             <div className="p-2 border rounded shadow">
                 <p className="font-semibold">InputLayer</p>
-                <p className="mt-2">Defines the shape and size of the input data.</p>
+                <p className="mt-2">{t.inputLayerInfo}</p>
             </div>
 
             <div className="p-2 border rounded shadow">
                 <p className="font-semibold">Dense</p>
-                <p className="mt-2">Fully connected layer where every neuron connects to all neurons in the next layer.</p>
+                <p className="mt-2">{t.denseInfo}</p>
             </div>
 
             <div className="p-2 border rounded shadow">
                 <p className="font-semibold">BatchNormalization</p>
-                <p className="mt-2">Normalizes activations across a batch to make learning faster and more stable.</p>
+                <p className="mt-2">{t.batchNormalizationInfo}</p>
             </div>
 
             <div className="p-2 border rounded shadow">
                 <p className="font-semibold">Dropout</p>
-                <p className="mt-2">Randomly deactivates some neurons during training to prevent overfitting.</p>
+                <p className="mt-2">{t.dropoutInfo}</p>
             </div>
         </section >
     );
@@ -66,6 +68,7 @@ export function Step3Page({
     layerModel: LayerModelType[],
     setLayerModel: React.Dispatch<React.SetStateAction<LayerModelType[]>>,
 }) {
+    const {t}=useLanguage();
     const [isOpenOptionLayer, setIsOpenOptionLayer] = useState(false);
 
     function addLayerHandler(type: 'dense' | 'batchNormalization' | 'dropout') {
@@ -123,7 +126,7 @@ export function Step3Page({
     }
 
     async function removeLayerHandler(id: string): Promise<void> {
-        const confirmation = await Dialog.showConfirmation('Are you sure want to delete this layer?')
+        const confirmation = await Dialog.showConfirmation(t.confirmDeleteLayer)
         if (confirmation.isConfirmed) {
             setLayerModel(prev =>
                 prev.filter(l => l.id !== id)
@@ -170,11 +173,11 @@ export function Step3Page({
                                             step={1}
                                             min={1}
                                             className="w-full p-2 border rounded-se rounded-ee" />
-                                        <Tooltip text="Number of neurons" />
+                                        <Tooltip text={t.unitsInfo} />
                                     </div>
                                     {
                                         isStep3Valid[`units-${layer.id}`] === false && (
-                                            <p className="text-red-500 text-sm">Input must be positive integer number</p>
+                                            <p className="text-red-500 text-sm">{t.unitsInvalid}</p>
                                         )
                                     }
                                 </div>
@@ -209,7 +212,7 @@ export function Step3Page({
                                             }}
                                             className="w-full p-2 border rounded-se rounded-ee"
                                         >
-                                            <option value="" disabled>Select activation</option>
+                                            <option value="" disabled>{t.select} activation</option>
                                             <option value="relu" className="border-black">relu</option>
                                             <option value="elu" className="border-black">elu</option>
                                             <option value="swish" className="border-black">swish</option>
@@ -217,29 +220,29 @@ export function Step3Page({
                                         </select>
                                         <Tooltip html={
                                             <>
-                                                <p>Applies a non-linear function to help the model learn complex patterns.</p>
+                                                <p>{t.activationInfo}</p>
                                                 <div className="grid grid-cols-[auto_1fr] gap-2">
                                                     <span className="font-mono">- relu:</span>
-                                                    <span>simple, fast, avoids vanishing gradients, works well in almost all deep nets</span>
+                                                    <span>{t.reluInfo}</span>
                                                 </div>
                                                 <div className="grid grid-cols-[auto_1fr] gap-2">
                                                     <span className="font-mono">- elu:</span>
-                                                    <span>smooth version of relu; works better with negative inputs</span>
+                                                    <span>{t.eluInfo}</span>
                                                 </div>
                                                 <div className="grid grid-cols-[auto_1fr] gap-2">
                                                     <span className="font-mono">- swish:</span>
-                                                    <span>newer relu alternative; often slightly better performance</span>
+                                                    <span>{t.swishInfo}</span>
                                                 </div>
                                                 <div className="grid grid-cols-[auto_1fr] gap-2">
                                                     <span className="font-mono">- tanh:</span>
-                                                    <span>older, still good for small or normalized inputs; outputs in [-1, 1]</span>
+                                                    <span>{t.tanhInfo}</span>
                                                 </div>
                                             </>
                                         } />
                                     </div>
                                     {
                                         isStep3Valid[`activation-${layer.id}`] === false && (
-                                            <p className="text-red-500 text-sm">Activation can be used are relu, elu, swish, and tanh</p>
+                                            <p className="text-red-500 text-sm">{t.activationInvalid}</p>
                                         )
                                     }
                                 </div>
@@ -286,11 +289,11 @@ export function Step3Page({
                                             setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, momentum: parsedValue } : l));
                                         }}
                                     />
-                                    <Tooltip text="How much past mean/variance are kept" />
+                                    <Tooltip text={t.momentumInfo} />
                                 </div>
                                 {
                                     isStep3Valid[`momentum-${layer.id}`] === false && (
-                                        <p className="text-red-500 text-sm">Input must be a float greater than 0 and less than 1(e.g., 0.99)</p>
+                                        <p className="text-red-500 text-sm">{t.momentumInvalid}</p>
                                     )
                                 }
                             </div>
@@ -327,11 +330,11 @@ export function Step3Page({
                                             setLayerModel(prev => prev.map(l => l.id === layer.id ? { ...l, epsilon: parsedValue } : l));
                                         }}
                                     />
-                                    <Tooltip text="Small value to avoid division by zero" />
+                                    <Tooltip text={t.epsilonInfo} />
                                 </div>
                                 {
                                     isStep3Valid[`epsilon-${layer.id}`] === false && (
-                                        <p className="text-red-500 text-sm">Input must be float in range from 0.00001 - 0.001</p>
+                                        <p className="text-red-500 text-sm">{t.epsilonInvalid}</p>
                                     )
                                 }
                             </div>
@@ -376,11 +379,11 @@ export function Step3Page({
                                         min={0.0}
                                         max={1}
                                         className="w-full p-2 border rounded-se rounded-ee" />
-                                    <Tooltip text="Fraction (0-1) of neurons to drop" />
+                                    <Tooltip text={t.rateInfo} />
                                 </div>
                                 {
                                     isStep3Valid[`rate-${layer.id}`] === false && (
-                                        <p className="text-red-500 text-sm">Input must be a float greater than 0 and less than 1 (e.g., 0.5)</p>
+                                        <p className="text-red-500 text-sm">{t.dropoutInvalid}</p>
                                     )
                                 }
                             </div>
@@ -392,7 +395,7 @@ export function Step3Page({
 
     return (
         <>
-            <h2 className="font-bold text-2xl text-left text-gray-700">3. Create sequential model</h2>
+            <h2 className="font-bold text-2xl text-left text-gray-700">3. {t.create} sequential model</h2>
 
             <InformationHelper />
 
@@ -415,7 +418,7 @@ export function Step3Page({
                                     id="input_shape"
                                     type="number"
                                     className="w-full p-2 border rounded-r opacity-75 cursor-not-allowed" />
-                                <Tooltip text="Tuple of input dimensions" />
+                                <Tooltip text={t.inputShapeInfo} />
                             </div>
                         </div>
                     </div>
@@ -472,7 +475,7 @@ export function Step3Page({
                                     id={`units-output`}
                                     type="number"
                                     className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed" />
-                                <Tooltip text="Number of output prediction class" />
+                                <Tooltip text={t.unitsOutputInfo} />
                             </div>
                             <div className="flex flex-row">
                                 <label
@@ -487,7 +490,7 @@ export function Step3Page({
                                 >
                                     <option value="softmax">softmax</option>
                                 </select>
-                                <Tooltip text="softmax is used for multi class prediction" />
+                                <Tooltip text={t.softmaxInfo} />
                             </div>
                         </div>
                     </div>
@@ -518,7 +521,7 @@ export function Step3Page({
                             px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
                             cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                         `}>
-                        <i className="fa-solid fa-star"></i> Use recommended
+                        <i className="fa-solid fa-star"></i> {t.useRecomend}
                     </button>
                 </div>
             </section >

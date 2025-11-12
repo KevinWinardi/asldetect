@@ -7,10 +7,12 @@ export class ChartJS {
         element,
         type,
         data,
+        title,
     }: {
         element: HTMLCanvasElement | null,
         type: 'acc' | 'loss',
-        data: EvaluationTrainValType
+        data: EvaluationTrainValType,
+        title: string
     }) {
         if (!element) throw new Error('Canvas not found');
 
@@ -58,7 +60,7 @@ export class ChartJS {
                 options: {
                     plugins: {
                         title: {
-                            text: 'Evaluation Chart',
+                            text: title,
                             display: true,
                         }
                     }
@@ -70,9 +72,11 @@ export class ChartJS {
     static createSplitDataChart({
         element,
         splitData,
+        title,
     }: {
         element: HTMLCanvasElement | null,
         splitData: SplitDataType,
+        title: string,
     }) {
         if (!element) throw new Error('Canvas not found');
 
@@ -111,7 +115,7 @@ export class ChartJS {
                     },
                     plugins: {
                         title: {
-                            text: 'Plot Training Model',
+                            text: title,
                             display: true,
                         }
                     }

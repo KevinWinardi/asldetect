@@ -83,7 +83,6 @@ export class Trainer extends BaseModel {
         if (this.model) {
             this.model.stopTraining = true;
         }
-        tf.engine().disposeVariables();
     }
 
     async saveModel({

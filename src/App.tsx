@@ -12,7 +12,7 @@ export function App() {
         <>
             <Header></Header>
 
-            <main className="min-h-dvh flex justify-center bg-gray-100">
+            <main className="min-h-dvh flex justify-center bg-gray-100 overflow-hidden">
                 <div className="w-full max-w-7xl">
                     <Routes>
                         <Route path="/" element={<HomePage />}></Route>

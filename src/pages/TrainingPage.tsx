@@ -3,21 +3,23 @@ import * as tf from '@tensorflow/tfjs';
 import { Step1Page } from "./TrainingSteps/Step1Page";
 import { Step2Page } from "./TrainingSteps/Step2Page";
 import { Step3Page } from "./TrainingSteps/Step3Page";
-import type { LayerModelType } from "../types/layerModelType";
-import type { SplitDataType } from "../types/splitDataType";
 import { Step4Page } from "./TrainingSteps/Step4Page";
 import { Step5Page } from "./TrainingSteps/Step5Page";
+import type { LayerModelType } from "../types/layerModelType";
+import type { SplitDataType } from "../types/splitDataType";
 import type { CompileModelType } from "../types/compileModelType";
-import { BaseModel } from "../utils/BaseModel";
 import type { FitModelType } from "../types/fitModelType";
 import { Trainer } from "../utils/Trainer";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function TrainingPage() {
+    const { t } = useLanguage();
     const tensorflowfDatasetRef = useRef<tf.data.CSVDataset | null>(null);
 
     const [currentIndexStep, setCurrentIndexStep] = useState(0);
     const [isTraining, setIsTraining] = useState(false);
 
+    const [previewData, setPreviewData] = useState<string[][]>([]);
     const [totalData, setTotalData] = useState(0);
     const [splitData, setSplitData] = useState<SplitDataType>({
         train: null,
@@ -75,6 +77,8 @@ export function TrainingPage() {
             tensorflowfDatasetRef={tensorflowfDatasetRef}
             totalData={totalData}
             setTotalData={setTotalData}
+            previewData={previewData}
+            setPreviewData={setPreviewData}
         />,
         <Step2Page
             isStep2Valid={isStep2Valid}
@@ -111,7 +115,7 @@ export function TrainingPage() {
 
     return (
         <div className="px-4 sm:px-8 pt-24 pb-8">
-            <h1 className="font-bold text-4xl text-center text-yellow-900">Training Model</h1>
+            <h1 className="font-bold text-4xl text-center text-orange-500">{t.training} Model</h1>
 
             <div className="max-w-lg block mx-auto mt-8 p-4 bg-white border rounded shadow-2xl">
                 {steps[currentIndexStep]}
@@ -125,7 +129,7 @@ export function TrainingPage() {
                             cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        <i className="fa-solid fa-arrow-left"></i> Back
+                        <i className="fa-solid fa-arrow-left"></i> {t.back}
                     </button>
                     <button
                         disabled={isNextButtonDisabled()}
@@ -135,7 +139,7 @@ export function TrainingPage() {
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        Next <i className="fa-solid fa-arrow-right"></i>
+                        {t.next} <i className="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>

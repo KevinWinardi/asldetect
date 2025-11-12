@@ -8,8 +8,10 @@ import type { FitModelType } from "../../types/fitModelType";
 import type { CompileModelType } from "../../types/compileModelType";
 import type { LayerModelType } from "../../types/layerModelType";
 import { Tooltip } from "../../components/Tooltip";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export function Tab1Page() {
+    const { t } = useLanguage();
     const [optionModel, setOptionModel] = useState<{ key: string, name: string }[]>();
     const [favoriteModel, setFavoriteModel] = useState(localStorage.getItem('favorite_model'));
     const [currentInformationModel, setCurrentInformationModel] = useState<{
@@ -65,18 +67,21 @@ export function Tab1Page() {
             ChartJS.createSplitDataChart({
                 element: splitDataCanvasElementRef.current,
                 splitData: splitData,
+                title: t.splitDataRatio,
             });
 
             ChartJS.createEvalChart({
                 element: accTrainValCanvasElementRef.current,
                 type: 'acc',
                 data: evaluationTrainVal,
+                title: t.evalPlot,
             });
 
             ChartJS.createEvalChart({
                 element: lossTrainValCanvasElementRef.current,
                 type: 'loss',
                 data: evaluationTrainVal,
+                title: t.evalPlot,
             });
         }
 
@@ -113,24 +118,26 @@ export function Tab1Page() {
             ChartJS.createSplitDataChart({
                 element: splitDataCanvasElementRef.current,
                 splitData: splitData,
+                title: t.splitDataRatio,
             });
 
             ChartJS.createEvalChart({
                 element: accTrainValCanvasElementRef.current,
                 type: 'acc',
                 data: evaluationTrainVal,
+                title: t.evalPlot,
             });
 
             ChartJS.createEvalChart({
                 element: lossTrainValCanvasElementRef.current,
                 type: 'loss',
                 data: evaluationTrainVal,
+                title: t.evalPlot,
             });
         } catch (error: any) {
             Dialog.showError(error.message);
         }
     }
-
 
     return (
         <>
@@ -163,12 +170,15 @@ export function Tab1Page() {
                             setFavoriteModel(currentInformationModel.key);
                         }
                     }}
-                    className="p-2 cursor-pointer transition duration-500 hover:scale-90">
+                    className="
+                        px-4 py-2 font-bold bg-blue-500 border-b-4 border-black
+                        rounded cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
+                    ">
                     <i className={`${favoriteModel === currentInformationModel?.key ? 'fa-solid fa-star' : 'fa-regular fa-star'} text-2xl text-yellow-300`}></i>
                 </button>
                 <button
                     onClick={async () => {
-                        const confirmation = await Dialog.showConfirmation('Are you sure want to remove this model?')
+                        const confirmation = await Dialog.showConfirmation(t.confirmDeleteModel)
                         if (confirmation.isConfirmed) {
                             const localStorageKeys = Object.keys(localStorage);
 
@@ -182,8 +192,10 @@ export function Tab1Page() {
                             });
                         }
                     }}
-                    className={`p-2 cursor-pointer transition duration-500 hover:scale-90 
-                    ${currentInformationModel?.key === 'model_default' ? 'hidden' : 'block'}`}
+                    className={` ${currentInformationModel?.key === 'model_default' ? 'hidden' : 'block'}
+                        px-4 py-2 font-bold bg-blue-500 border-b-4 border-black
+                        rounded cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
+                `}
                 >
                     <i className="fa-solid fa-trash text-2xl text-red-500"></i>
                 </button>
@@ -219,7 +231,7 @@ export function Tab1Page() {
                                                             id="input_shape"
                                                             type="number"
                                                             className="w-full p-2 border rounded-r opacity-75 cursor-not-allowed" />
-                                                        <Tooltip text="Tuple of input dimensions" />
+                                                        <Tooltip text={t.inputShapeInfo} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -246,7 +258,7 @@ export function Tab1Page() {
                                                                     type="number"
                                                                     disabled
                                                                     className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed" />
-                                                                <Tooltip text="Number of neurons" />
+                                                                <Tooltip text={t.unitsInfo} />
                                                             </div>
                                                         </div>
 
@@ -271,22 +283,22 @@ export function Tab1Page() {
                                                                 </select>
                                                                 <Tooltip html={
                                                                     <>
-                                                                        <p>Applies a non-linear function to help the model learn complex patterns.</p>
+                                                                        <p>{t.activationInfo}</p>
                                                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                                                             <span className="font-mono">- relu:</span>
-                                                                            <span>simple, fast, avoids vanishing gradients, works well in almost all deep nets</span>
+                                                                            <span>{t.reluInfo}</span>
                                                                         </div>
                                                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                                                             <span className="font-mono">- elu:</span>
-                                                                            <span>smooth version of relu; works better with negative inputs</span>
+                                                                            <span>{t.eluInfo}</span>
                                                                         </div>
                                                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                                                             <span className="font-mono">- swish:</span>
-                                                                            <span>newer relu alternative; often slightly better performance</span>
+                                                                            <span>{t.swishInfo}</span>
                                                                         </div>
                                                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                                                             <span className="font-mono">- tanh:</span>
-                                                                            <span>older, still good for small or normalized inputs; outputs in [-1, 1]</span>
+                                                                            <span>{t.tanhInfo}</span>
                                                                         </div>
                                                                     </>
                                                                 } />
@@ -318,7 +330,7 @@ export function Tab1Page() {
                                                                 disabled
                                                                 className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed"
                                                             />
-                                                            <Tooltip text="How much past mean/variance are kept" />
+                                                            <Tooltip text={t.momentumInfo} />
                                                         </div>
                                                     </div>
 
@@ -336,7 +348,7 @@ export function Tab1Page() {
                                                                 disabled
                                                                 className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed"
                                                             />
-                                                            <Tooltip text="Small value to avoid division by zero" />
+                                                            <Tooltip text={t.epsilonInfo} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -363,7 +375,7 @@ export function Tab1Page() {
                                                                 type="number"
                                                                 disabled
                                                                 className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed" />
-                                                            <Tooltip text="Fraction (0-1) of neurons to drop" />
+                                                            <Tooltip text={t.rateInfo} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -390,7 +402,7 @@ export function Tab1Page() {
                                                             id={`units-output`}
                                                             type="number"
                                                             className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed" />
-                                                        <Tooltip text="Number of output prediction class" />
+                                                        <Tooltip text={t.unitsOutputInfo} />
                                                     </div>
                                                     <div className="flex flex-row">
                                                         <label
@@ -405,7 +417,7 @@ export function Tab1Page() {
                                                         >
                                                             <option value="softmax">softmax</option>
                                                         </select>
-                                                        <Tooltip text="softmax is used for multi class prediction" />
+                                                        <Tooltip text={t.softmaxInfo} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -434,31 +446,28 @@ export function Tab1Page() {
                                     disabled
                                     className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed"
                                 >
-                                    <option value="" disabled>Select optimizer</option>
+                                    <option value="" disabled>{t.select} optimizer</option>
                                     <option value="adam">Adam</option>
                                     <option value="rmsprop">RMSProp</option>
                                     <option value="sgd">SGD</option>
                                 </select>
                                 <Tooltip html={
                                     <>
-                                        <p>An optimizer is an algorithm that adjusts the model's parameters (like weights and biases)
-                                            during training to minimize the loss function — that is, to make predictions more accurate.</p>
+                                        <p>{t.optimizerInfo}</p>
                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                             <span className="font-mono">- Adam:</span>
-                                            <span>combines momentum (past gradients) + RMSProp (adaptive learning rates).
-                                                Keeps track of both mean and variance of gradients.</span>
+                                            <span>{t.adamInfo}</span>
                                         </div>
                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                             <span className="font-mono">- RMSProp:</span>
-                                            <span>keeps a moving average of squared gradients and divides the learning rate by this average</span>
+                                            <span>{t.rmspropInfo}</span>
                                         </div>
                                         <div className="grid grid-cols-[auto_1fr] gap-2">
                                             <span className="font-mono">- SGD:</span>
-                                            <span>updates weights using the gradient of the loss with respect to each parameter for each batch</span>
+                                            <span>{t.sgdInfo}</span>
                                         </div>
                                     </>
-                                }
-                                />
+                                } />
                             </div>
                         </div>
 
@@ -478,12 +487,12 @@ export function Tab1Page() {
                                 />
                                 <Tooltip html={
                                     <>
-                                        <p>Controls how fast the model updates its weights during training.</p>
+                                        <p>{t.learningRateInfo}</p>
                                         <div className="grid grid-cols-[auto_1fr] gap-2">
-                                            <span>Too high → unstable training.</span>
+                                            <span>{t.learningRateHigh}</span>
                                         </div>
                                         <div className="grid grid-cols-[auto_1fr] gap-2">
-                                            <span>Too low → very slow learning.</span>
+                                            <span>{t.learningRateLow}</span>
                                         </div>
                                     </>
                                 } />
@@ -504,8 +513,7 @@ export function Tab1Page() {
                             >
                                 <option value="categoricalCrossentropy">Categorical Crossentropy</option>
                             </select>
-                            <Tooltip text="A number that shows how wrong the model's predictions are compared to the real answers.
-The model tries to minimize this value while learning." />
+                            <Tooltip text={t.lossInfo} />
                         </div>
 
                         <div className="flex flex-row">
@@ -522,7 +530,7 @@ The model tries to minimize this value while learning." />
                             >
                                 <option value="accuracy">accuracy</option>
                             </select>
-                            <Tooltip text="Extra measures to evaluate model performance, usually for reporting" />
+                            <Tooltip text={t.accInfo} />
                         </div>
                     </div>
                 </section>
@@ -545,7 +553,7 @@ The model tries to minimize this value while learning." />
                                     type="number"
                                     disabled
                                     className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed" />
-                                <Tooltip text="An epoch is one complete pass of the entire training dataset through the model during training (e.g. 10)" />
+                                <Tooltip text={t.epochsInfo} />
                             </div>
                         </div>
 
@@ -562,7 +570,7 @@ The model tries to minimize this value while learning." />
                                     type="number"
                                     disabled
                                     className="w-full p-2 border rounded-se rounded-ee opacity-75 cursor-not-allowed" />
-                                <Tooltip text="Batch size is the number of training samples the model processes before updating its weights once during training (e.g. 32)" />
+                                <Tooltip text={t.batchSizeInfo} />
                             </div>
                         </div>
                     </div>
@@ -576,10 +584,10 @@ The model tries to minimize this value while learning." />
 
                 <p className="font-semibold">Total data: {currentInformationModel?.totalData.toLocaleString('id-ID')}</p>
                 <div className="my-4 grid grid-cols-2 gap-2">
-                    <p className="p-2 text-green-500 border rounded shadow">Acc Test: {currentInformationModel?.evaluationTest.acc.toFixed(4)}</p>
-                    <p className="p-2 text-red-500 border rounded shadow">Loss Test: {currentInformationModel?.evaluationTest.loss.toFixed(4)}</p>
+                    <p className="p-2 text-green-500 border rounded shadow">{t.accTest}: {currentInformationModel?.evaluationTest.acc.toFixed(4)}</p>
+                    <p className="p-2 text-red-500 border rounded shadow">{t.lossTest}: {currentInformationModel?.evaluationTest.loss.toFixed(4)}</p>
                 </div>
-                <p className="text-sm text-gray-500 italic">Created at: {currentInformationModel?.createdAt}</p>
+                <p className="text-sm text-gray-500 italic">{t.createdAt}: {currentInformationModel?.createdAt}</p>
             </div>
         </>
     );

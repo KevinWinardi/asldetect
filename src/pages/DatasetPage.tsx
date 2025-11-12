@@ -4,8 +4,10 @@ import { Dialog } from "../utils/Dialog";
 import { Canvas } from "../utils/Canvas";
 import { Mediapipe } from "../utils/Mediapipe";
 import { Dataset } from "../utils/Dataset";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function DatasetPage() {
+    const { t } = useLanguage();
     const videoElementRef = useRef<HTMLVideoElement | null>(null);
     const nextLetterButtonElementRef = useRef<HTMLButtonElement | null>(null);
     const downloadButtonElementRef = useRef<HTMLButtonElement | null>(null);
@@ -78,7 +80,7 @@ export function DatasetPage() {
             !datasetInstanceRef.current ||
             !canvasInstanceRef.current
         ) {
-            return Dialog.showError('Some element not found');
+            return Dialog.showError(t.refNotFound);
         }
 
         const dataPerLabelInputElement = dataPerLabelInputElementRef.current;
@@ -135,7 +137,7 @@ export function DatasetPage() {
                     );
 
                     if (currentLetterIndex >= letters.length - 1) {
-                        setDisplayText('Finish generate dataset ✅');
+                        setDisplayText(t.finishGenerateDataset);
                         nextLetterButtonElement.classList.add('hidden');
                         downloadButtonElement.classList.remove('hidden');
                         return;
@@ -153,7 +155,7 @@ export function DatasetPage() {
                 }
                 const nextLetterHandlerTemp = async () => {
                     setTimeout(() => {
-                        
+
                     }, 1000);
                     ++currentLetterIndex;
                     setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
@@ -165,7 +167,7 @@ export function DatasetPage() {
                 setIsCameraRunnning(false);
             }
         } else {
-            const confirmation = await Dialog.showConfirmation('Are you sure want to stop camera stream?');
+            const confirmation = await Dialog.showConfirmation(t.confirmStopCamera);
 
             if (confirmation.isConfirmed) {
                 setIsCameraRunnning(false);
@@ -182,18 +184,17 @@ export function DatasetPage() {
 
     return (
         <div className="px-4 sm:px-8 pt-24 pb-8">
-            <h1 className="font-bold text-4xl text-center text-yellow-900">Generate Dataset</h1>
+            <h1 className="font-bold text-4xl text-center text-orange-500">{t.generateDataset}</h1>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <section>
                     <ul
                         className="mt-8 p-4 h-min flex flex-col gap-4 list-decimal list-inside bg-amber-100 border-l-amber-700 border-l-[16px] sm:border-l-[32px] shadow-lg rounded-3xl">
-                        <li>Input amount data per label on top input</li>
-                        <li>Press "Start Camera" button</li>
-                        <li>Enable camera permission on browser</li>
-                        <li>Show your hand with ASL gesture to get the prediction</li>
-                        <li>Wait until all letters finish recorded and you can download the csv file</li>
-                        <img src="asl_dictionary.png" alt="ASL Dictionary" className="w-full max-w-sm block mx-auto" />
+                        <li>{t.inputDataPerLabel}</li>
+                        <li>{t.pressStartCamera}</li>
+                        <li>{t.enableCameraPermission}</li>
+                        <li>{t.showHand}</li>
+                        <img src="./images/asl_dictionary.png" alt="ASL Dictionary" className="w-full max-w-sm block mx-auto" />
                     </ul>
                 </section>
 
@@ -224,7 +225,7 @@ export function DatasetPage() {
                                 className="border rounded p-2 outline-none transition  focus:border-2 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed" />
                             {
                                 isValidDataPerLabel === false && (
-                                    <span className="text-sm text-red-500">Input must be positive integer number minimum 10</span>
+                                    <span className="text-sm text-red-500">{t.invalidDataPerLabel}</span>
                                 )
                             }
                         </div>
@@ -259,7 +260,7 @@ export function DatasetPage() {
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:text-green-500 disabled:bg-white disabled:border disabled:border-green-500"
                     >
-                        Next Letter <i className="fa-solid fa-arrow-right"></i>
+                        {t.next} <i className="fa-solid fa-arrow-right"></i>
                     </button>
 
                     <button
@@ -271,7 +272,7 @@ export function DatasetPage() {
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}
                     >
-                        Download Dataset (.csv) <i className="fa-solid fa-download"></i> 
+                        {t.download} Dataset (.csv) <i className="fa-solid fa-download"></i>
                     </button>
 
                     <button
@@ -282,7 +283,7 @@ export function DatasetPage() {
                             rounded cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                        <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i> {isCameraRunning ? 'Stop Camera' : 'Start Camera'} 
+                        <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i> {isCameraRunning ? t.stopCamera : t.startCamera}
                     </button>
                 </section>
             </div>

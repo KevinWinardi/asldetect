@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import type { InputLayerType, LayerModelType, OutputLayerType } from '../types/layerModelType';
+import type { LayerModelType } from '../types/layerModelType';
 import type { CompileModelType } from '../types/compileModelType';
 import { Dialog } from './Dialog';
 import type { EvaluationTrainValType } from '../types/evaluationTrainValType';
@@ -84,12 +84,13 @@ export class BaseModel {
         createdAt: string,
     }> {
         let data;
+        console.log(currentKeyModel);
+        
         if (currentKeyModel === 'model_default') {
             const res = await fetch('model_default_information.json');
             data = await res.json();
         } else {
             const res = localStorage.getItem(currentKeyModel);
-            console.log(res)
             if (!res) {
                 throw new Error('No model found');
             }

@@ -1,22 +1,25 @@
 import React, { useEffect, useRef } from "react";
 import type { SplitDataType } from "../../types/splitDataType";
 import { ChartJS } from "../../utils/ChartJS";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 function InformationHelper() {
+    const { t } = useLanguage();
+
     return (
         <section className="flex flex-col gap-4 mt-4">
-            <p>Data in machine learning needs to be divided into 3 parts, namely training, validation, and testing data.</p>
+            <p>{t.splitInfo}</p>
             <div className="p-2 border rounded sahdow">
-                <p className="font-semibold">Training Data</p>
-                <p className="mt-2">This is the largest portion of the dataset and is used to train the machine learning model. The model learns patterns, relationships, and features from this data to make predictions or classifications.</p>
+                <p className="font-semibold">{t.train} Data</p>
+                <p className="mt-2">{t.trainInfo}</p>
             </div>
             <div className="p-2 border rounded sahdow">
-                <p className="font-semibold">Validation Data</p>
-                <p className="mt-2"> This set is used during the training phase to evaluate the model's performance on unseen data and to tune hyperparameters.</p>
+                <p className="font-semibold">{t.val} Data</p>
+                <p className="mt-2">{t.valInfo}</p>
             </div>
             <div className="p-2 border rounded sahdow">
-                <p className="font-semibold">Testing Data</p>
-                <p className="mt-2"> This is a completely independent set of data, held out throughout the entire model development process, and is used to provide an unbiased evaluation of the final, chosen model.</p>
+                <p className="font-semibold">{t.test} Data</p>
+                <p className="mt-2">{t.testInfo}</p>
             </div>
         </section>
     );
@@ -33,6 +36,7 @@ export function Step2Page({
     splitData: SplitDataType,
     setSplitData: React.Dispatch<React.SetStateAction<SplitDataType>>,
 }) {
+    const { t } = useLanguage();
     const splitDataCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
@@ -40,6 +44,7 @@ export function Step2Page({
         ChartJS.createSplitDataChart({
             element: splitDataCanvasElementRef.current,
             splitData: splitData,
+            title: t.splitDataRatio,
         });
 
         if (values.some(v => v === null)) {
@@ -58,14 +63,14 @@ export function Step2Page({
     }, [splitData]);
 
     const inputs = [
-        { id: 'train', label: 'Training' },
-        { id: 'val', label: 'Validation' },
-        { id: 'test', label: 'Testing' },
+        { id: 'train', label: t.train },
+        { id: 'val', label: t.val },
+        { id: 'test', label: t.test },
     ]
 
     return (
         <>
-            <h2 className="font-bold text-2xl text-left text-gray-700">2. Split data train/val/test</h2>
+            <h2 className="font-bold text-2xl text-left text-gray-700">2. {t.splitDataTrainValTest}</h2>
 
             <InformationHelper />
 
@@ -99,12 +104,12 @@ export function Step2Page({
 
             {
                 isStep2Valid === false && (
-                    <p className="mt-2 text-sm text-red-500">Each input must be positive integer number and sum 100%</p>
+                    <p className="mt-2 text-sm text-red-500">{t.invalidSplit}</p>
                 )
             }
 
             <section className="mt-4 italic">
-                <p>There are several commonly ratio for split data into train/val/test</p>
+                <p>{t.splitRecomend}</p>
                 <ul className="list-inside list-disc">
                     <li className="ml-4">70 : 15 : 15</li>
                     <li className="ml-4">80 : 10 : 10</li>
@@ -130,7 +135,7 @@ export function Step2Page({
                             cursor-pointer transition not-disabled:hover:translate-y-0.5 not-disabled:hover:border-transparent not-disabled:hover:opacity-75
                             disabled:cursor-not-allowed disabled:opacity-50
                         `}>
-                    <i className="fa-solid fa-star"></i> Use recommended
+                    <i className="fa-solid fa-star"></i> {t.useRecomend}
                 </button>
             </div>
         </>

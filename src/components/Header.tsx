@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function Header() {
     const [openMenu, setOpenMenu] = useState(false);
+    const { t } = useLanguage();
 
     return (
         <header className="fixed top-0 left-0 z-50 flex justify-center w-full shadow-md bg-white">
@@ -17,10 +19,10 @@ export function Header() {
                     <div>
                         <nav>
                             <ul className="flex gap-8 font-semibold">
-                                <li><Link to='/' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Home</Link></li>
-                                <li><Link to='/detection' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Detection</Link></li>
+                                <li><Link to='/' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.home}</Link></li>
+                                <li><Link to='/detection' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.detection}</Link></li>
                                 <li><Link to='/dataset' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Dataset</Link></li>
-                                <li><Link to='/training' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Training</Link></li>
+                                <li><Link to='/training' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.training}</Link></li>
                             </ul>
                         </nav>
                     </div>
@@ -31,7 +33,7 @@ export function Header() {
                             className="block p-2 text-white bg-blue-500 font-semibold rounded-md transition hover:opacity-75 hover:scale-90 cursor-pointer"
                             onClick={() => setOpenMenu(false)}
                         >
-                            <i className="fa-solid fa-gear"></i> Setting
+                            <i className="fa-solid fa-gear"></i> {t.setting}
                         </Link>
                     </div>
                 </section>
@@ -50,7 +52,7 @@ export function Header() {
                                     className="block p-4 hover:bg-blue-500 hover:text-white transition"
                                     onClick={() => setOpenMenu(false)}
                                 >
-                                    Home
+                                    {t.home}
                                 </Link>
                             </li>
                             <li>
@@ -59,7 +61,7 @@ export function Header() {
                                     className="block p-4 hover:bg-blue-500 hover:text-white transition"
                                     onClick={() => setOpenMenu(false)}
                                 >
-                                    Detection
+                                    {t.detection}
                                 </Link>
                             </li>
                             <li>
@@ -77,7 +79,7 @@ export function Header() {
                                     className="block p-4 hover:bg-blue-500 hover:text-white transition"
                                     onClick={() => setOpenMenu(false)}
                                 >
-                                    Training
+                                    {t.training}
                                 </Link>
                             </li>
                         </ul>
@@ -85,10 +87,10 @@ export function Header() {
 
                     <Link
                         to={'/setting'}
-                        className="block w-max m-4 p-2 text-white bg-blue-500 font-semibold rounded-md transition hover:opacity-75 hover:scale-90 cursor-pointer"
+                        className="block w-max m-4 p-2 text-white bg-blue-500 font-semibold rounded-md transition duration-500 hover:opacity-75 hover:scale-95 cursor-pointer"
                         onClick={() => setOpenMenu(false)}
                     >
-                        <i className="fa-solid fa-right-to-bracket"></i> Setting
+                        <i className="fa-solid fa-gear"></i> {t.setting}
                     </Link>
                 </section>
             </div>

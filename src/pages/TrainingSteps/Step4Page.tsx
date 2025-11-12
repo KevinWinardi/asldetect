@@ -1,6 +1,7 @@
 import type React from "react";
 import { Tooltip } from "../../components/Tooltip";
 import type { CompileModelType } from "../../types/compileModelType";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export function Step4Page({
     isStep4Valid,
@@ -19,12 +20,13 @@ export function Step4Page({
     compileModel: CompileModelType,
     setCompileModel: React.Dispatch<React.SetStateAction<CompileModelType>>,
 }) {
+    const { t } = useLanguage();
     return (
         <>
             <h2 className="font-bold text-2xl text-left text-gray-700">4. Compile model</h2>
 
             <section className="mt-4">
-                <p>Prepares your model for training, it sets how the model learns.</p>
+                <p>{t.compileInfo}</p>
             </section>
 
             <section className="mt-4">
@@ -56,27 +58,25 @@ export function Step4Page({
                                     setIsStep4Valid(prev => ({ ...prev, optimizer: validity }));
                                 }}
                             >
-                                <option value="" disabled>Select optimizer</option>
+                                <option value="" disabled>{t.select} optimizer</option>
                                 <option value="adam">Adam</option>
                                 <option value="rmsprop">RMSProp</option>
                                 <option value="sgd">SGD</option>
                             </select>
                             <Tooltip html={
                                 <>
-                                    <p>An optimizer is an algorithm that adjusts the model's parameters (like weights and biases)
-                                        during training to minimize the loss function — that is, to make predictions more accurate.</p>
+                                    <p>{t.optimizerInfo}</p>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
                                         <span className="font-mono">- Adam:</span>
-                                        <span>combines momentum (past gradients) + RMSProp (adaptive learning rates).
-                                            Keeps track of both mean and variance of gradients.</span>
+                                        <span>{t.adamInfo}</span>
                                     </div>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
                                         <span className="font-mono">- RMSProp:</span>
-                                        <span>keeps a moving average of squared gradients and divides the learning rate by this average</span>
+                                        <span>{t.rmspropInfo}</span>
                                     </div>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
                                         <span className="font-mono">- SGD:</span>
-                                        <span>updates weights using the gradient of the loss with respect to each parameter for each batch</span>
+                                        <span>{t.sgdInfo}</span>
                                     </div>
                                 </>
                             }
@@ -84,7 +84,7 @@ export function Step4Page({
                         </div>
                         {
                             isStep4Valid.optimizer === false && (
-                                <p className="text-red-500 text-sm">Invalid optimizer selection</p>
+                                <p className="text-red-500 text-sm">{t.optimizerInvalid}</p>
                             )
                         }
                     </div>
@@ -125,19 +125,19 @@ export function Step4Page({
                             />
                             <Tooltip html={
                                 <>
-                                    <p>Controls how fast the model updates its weights during training.</p>
+                                    <p>{t.learningRateInfo}</p>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
-                                        <span>Too high → unstable training.</span>
+                                        <span>{t.learningRateHigh}</span>
                                     </div>
                                     <div className="grid grid-cols-[auto_1fr] gap-2">
-                                        <span>Too low → very slow learning.</span>
+                                        <span>{t.learningRateLow}</span>
                                     </div>
                                 </>
                             } />
                         </div>
                         {
                             isStep4Valid.learningRate === false && (
-                                <p className="text-red-500 text-sm">Learning Rate must be float in range 0 - 1 (e.g. 0.001)</p>
+                                <p className="text-red-500 text-sm">{t.learningRateInvalid}</p>
                             )
                         }
                     </div>
@@ -156,8 +156,7 @@ export function Step4Page({
                         >
                             <option value="categoricalCrossentropy">Categorical Crossentropy</option>
                         </select>
-                        <Tooltip text="A number that shows how wrong the model's predictions are compared to the real answers.
-The model tries to minimize this value while learning." />
+                        <Tooltip text={t.lossInfo} />
                     </div>
 
                     <div className="flex flex-row">
@@ -174,7 +173,7 @@ The model tries to minimize this value while learning." />
                         >
                             <option value="accuracy">accuracy</option>
                         </select>
-                        <Tooltip text="Extra measures to evaluate model performance, usually for reporting" />
+                        <Tooltip text={t.accInfo} />
                     </div>
                 </div>
 
@@ -196,7 +195,7 @@ The model tries to minimize this value while learning." />
                     px-4 py-2 font-bold text-white bg-green-500 border-b-4 border-black rounded
                     cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                 `}>
-                        <i className="fa-solid fa-star"></i> Use recommended
+                        <i className="fa-solid fa-star"></i> {t.useRecomend}
                     </button>
                 </div>
             </section>

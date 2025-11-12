@@ -4,8 +4,10 @@ import { Canvas } from "../utils/Canvas";
 import { Mediapipe } from "../utils/Mediapipe";
 import { Dialog } from "../utils/Dialog";
 import { BaseModel } from "../utils/BaseModel";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function DetectionPage() {
+    const { t } = useLanguage();
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [displayText, setDisplayText] = useState('');
     const [currentKeyModel, setCurrentKeyModel] = useState(localStorage.getItem('favorite_model') ?? 'model_default');
@@ -56,80 +58,83 @@ export function DetectionPage() {
     }, [])
 
     async function cameraButtonHandler() {
-        if (
-            // !cameraSelectElementRef.current ||
-            !videoElementRef.current ||
-            !canvasInstanceRef.current ||
-            !mediapipeInstanceRef.current ||
-            !cameraInstanceRef.current ||
-            !canvasInstanceRef.current
-        ) {
-            return Dialog.showError('Some ref not found');
-        }
-
-        // const cameraSelectElement = cameraSelectElementRef.current;
-        const cameraInstance = cameraInstanceRef.current;
-        const canvasInstance = canvasInstanceRef.current;
-        const mediapipeInstance = mediapipeInstanceRef.current;
-
-        if (!isCameraRunning) {
-            setIsCameraRunnning(true);
-
-            setDisplayText('');
-
-            const permission = await cameraInstance.requestPermission();
-            if (permission) {
-                const cameraOptionList = await cameraInstance.createOptions();
-                if (cameraOptionList === false) {
-                    return;
-                }
-                setCameraOption(cameraOptionList);
-
-                cameraInstance.start();
-
-                const handLandmarker = await mediapipeInstance.createHandLandmarker();
-                const { mean, std, label } = await BaseModel.loadInformationModel(currentKeyModel);
-                await cameraInstance.predictionLoop({
-                    setDisplayText,
-                    handLandmarker,
-                    canvasInstance,
-                    mean,
-                    std,
-                    label,
-                    currentKeyModel,
-                });
+        try {
+            if (
+                !videoElementRef.current ||
+                !canvasInstanceRef.current ||
+                !mediapipeInstanceRef.current ||
+                !cameraInstanceRef.current ||
+                !canvasInstanceRef.current
+            ) {
+                return Dialog.showError(t.refNotFound);
             }
-        } else {
-            const confirmation = await Dialog.showConfirmation('Are you sure want to stop camera stream?');
 
-            if (confirmation.isConfirmed) {
-                setIsCameraRunnning(false);
+            // const cameraSelectElement = cameraSelectElementRef.current;
+            const cameraInstance = cameraInstanceRef.current;
+            const canvasInstance = canvasInstanceRef.current;
+            const mediapipeInstance = mediapipeInstanceRef.current;
+
+            if (!isCameraRunning) {
+                setIsCameraRunnning(true);
+
                 setDisplayText('');
 
-                cameraInstance.stop();
-                canvasInstance.clear();
+                const permission = await cameraInstance.requestPermission();
+                if (permission) {
+                    const cameraOptionList = await cameraInstance.createOptions();
+                    if (cameraOptionList === false) {
+                        return;
+                    }
+                    setCameraOption(cameraOptionList);
+
+                    cameraInstance.start();
+
+                    const handLandmarker = await mediapipeInstance.createHandLandmarker();
+                    const { mean, std, label } = await BaseModel.loadInformationModel(currentKeyModel);
+                    await cameraInstance.predictionLoop({
+                        setDisplayText,
+                        handLandmarker,
+                        canvasInstance,
+                        mean,
+                        std,
+                        label,
+                        currentKeyModel,
+                    });
+                }
+            } else {
+                const confirmation = await Dialog.showConfirmation(t.confirmStopCamera);
+
+                if (confirmation.isConfirmed) {
+                    setIsCameraRunnning(false);
+                    setDisplayText('');
+
+                    cameraInstance.stop();
+                    canvasInstance.clear();
+                }
             }
+        } catch (error: any) {
+            Dialog.showError(error.message);
         }
     }
 
     return (
         <div className="px-4 sm:px-8 pt-24 pb-8">
-            <h1 className="font-bold text-4xl text-center text-yellow-900">Detection</h1>
+            <h1 className="font-bold text-4xl text-center text-orange-500">{t.detection}</h1>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <section>
                     <ul
                         className="mt-8 p-4 h-min flex flex-col gap-4 list-decimal list-inside bg-amber-100 border-l-amber-700 border-l-[16px] sm:border-l-[32px] shadow-lg rounded-3xl">
-                        <li>Press "Start Camera" button</li>
-                        <li>Enable camera permission on browser</li>
-                        <li>Show your hand with ASL gesture to get the prediction</li>
-                        <img src="asl_dictionary.png" alt="ASL Dictionary" className="w-full max-w-sm block mx-auto" />
+                        <li>{t.pressStartCamera}</li>
+                        <li>{t.enableCameraPermission}</li>
+                        <li>{t.showHand}</li>
+                        <img src="./images/asl_dictionary.png" alt="ASL Dictionary" className="w-full max-w-sm block mx-auto" />
                     </ul>
                 </section>
 
                 <section className="flex flex-col items-center mt-8">
                     <div className="mb-4 p-4 flex flex-col gap-4 w-full bg-white border rounded shadow-2xl">
-                        <label htmlFor="model-select" className="font-semibold text-gray-700">Select model</label>
+                        <label htmlFor="model-select" className="font-semibold text-gray-700">{t.select} model</label>
                         <select
                             value={currentKeyModel}
                             id="model-select"
@@ -137,7 +142,7 @@ export function DetectionPage() {
                             onChange={(e) => setCurrentKeyModel(e.target.value)}
                             name="model-select"
                             className={`w-full mb-4 p-2 border rounded disabled:opacity-75 disabled:cursor-not-allowed`}>
-                            <option value="default">Default</option>
+                            <option value="model_default">Default</option>
                             {
                                 modelOption && (
                                     modelOption.map(model => (
@@ -177,14 +182,14 @@ export function DetectionPage() {
                             mt-4 px-4 py-2 font-bold text-white ${isCameraRunning ? 'bg-red-500' : 'bg-blue-500'} border-b-4 border-black
                             rounded cursor-pointer transition hover:translate-y-0.5 hover:border-transparent hover:opacity-75
                         `}>
-                        <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i> {isCameraRunning ? 'Stop Camera' : 'Start Camera'}
+                        <i className={`fa-solid ${isCameraRunning ? 'fa-stop' : 'fa-camera'}`}></i> {isCameraRunning ? t.stopCamera : t.startCamera}
                     </button>
 
                     <div className="mt-12 flex flex-col items-center gap-4 w-full max-w-sm">
                         <div id="output-text" className="text-4xl font-bold"></div>
                     </div>
                 </section>
-            </div>
+            </div >
         </div >
     );
 }
