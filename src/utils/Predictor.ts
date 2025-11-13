@@ -3,6 +3,13 @@ import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import * as tf from '@tensorflow/tfjs';
 
 export class Predictor extends BaseModel {
+    static async loadModel(keyName: string): Promise<tf.LayersModel> {
+        if (keyName === 'model_default') {
+            return await tf.loadLayersModel('./model_default.json');
+        }
+        return await tf.loadLayersModel(`localstorage://${keyName}`);
+    }
+
     static predict({
         landmarks,
         mean,
@@ -24,12 +31,5 @@ export class Predictor extends BaseModel {
             const maxIdx = probs.indexOf(Math.max(...probs));
             return probs[maxIdx] > 0.7 ? label[maxIdx] : '???';
         });
-    }
-
-    static async loadModel(keyName: string): Promise<tf.LayersModel> {
-        if (keyName === 'model_default') {
-            return await tf.loadLayersModel('./model_default.json');
-        }
-        return await tf.loadLayersModel(`localstorage://${keyName}`);
     }
 }

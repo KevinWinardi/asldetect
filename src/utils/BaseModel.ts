@@ -84,7 +84,6 @@ export class BaseModel {
         createdAt: string,
     }> {
         let data;
-        console.log(currentKeyModel);
         
         if (currentKeyModel === 'model_default') {
             const res = await fetch('model_default_information.json');

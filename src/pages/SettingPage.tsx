@@ -28,11 +28,6 @@ export function SettingPage() {
                         className={`${currentIndexTab === 1 ? 'bg-blue-700 text-white scale-110 origin-left' : 'bg-white text-blue-500'} p-4 text-left border rounded-t font-semibold cursor-pointer transition duration-500 hover:hover:bg-blue-700 hover:text-white`}>
                         <span>{t.language}</span> <i className="fa-solid fa-language"></i>
                     </button>
-                    <button
-                        onClick={() => setCurrentIndexTab(2)}
-                        className={`${currentIndexTab === 2 ? 'bg-blue-700 text-white scale-110 origin-left' : 'bg-white text-blue-500'} p-4 text-left border rounded-t font-semibold cursor-pointer transition duration-500 hover:hover:bg-blue-700 hover:text-white`}>
-                        <span>Install</span> <i className="fa-solid fa-mobile-screen-button"></i>
-                    </button>
                 </section>
 
                 <section className="flex-1 p-4 border rounded-se rounded-b shadow-2xl">

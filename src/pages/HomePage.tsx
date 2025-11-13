@@ -7,8 +7,8 @@ export function HomePage() {
     return (
         <>
             <section className="relative grid grid-cols-1 lg:grid-cols-2 place-items-center gap-8 min-h-dvh px-4 lg:px-32 bg-white">
+                <div className="absolute top-12 -left-8 w-32 h-32 border-[20px] border-blue-500/50 rounded-full"></div>
                 <div className="absolute bottom-0 -right-8 w-24 h-24 border-8 border-blue-500/50 rounded-full"></div>
-                <div className="absolute top-12 -left-12 w-32 h-32 border-[20px] border-blue-500/50 rounded-full"></div>
 
                 <div className="flex justify-center items-center flex-col gap-8 pt-36 lg:pt-8">
                     <h1 className="text-6xl font-extrabold text-blue-500">{t.welcomeJumbotron}</h1>

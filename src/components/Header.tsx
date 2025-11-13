@@ -10,9 +10,9 @@ export function Header() {
         <header className="fixed top-0 left-0 z-50 flex justify-center w-full shadow-md bg-white">
             <div className="w-full max-w-7xl flex justify-between items-center px-8 py-4 ">
                 <section className="flex-[2]">
-                    <span className="text-2xl font-bold">
-                        ASL Detection
-                    </span>
+                    <Link to='/' className="text-2xl font-bold">
+                        ASL Detect
+                    </Link>
                 </section>
 
                 <section className="hidden sm:flex flex-[3] justify-between items-center">
@@ -30,7 +30,7 @@ export function Header() {
                     <div>
                         <Link
                             to='/setting'
-                            className="block p-2 text-white bg-blue-500 font-semibold rounded-md transition hover:opacity-75 hover:scale-90 cursor-pointer"
+                            className="block p-2 text-white text-center bg-blue-500 font-semibold rounded-md transition hover:opacity-75 hover:scale-90 cursor-pointer"
                             onClick={() => setOpenMenu(false)}
                         >
                             <i className="fa-solid fa-gear"></i> {t.setting}

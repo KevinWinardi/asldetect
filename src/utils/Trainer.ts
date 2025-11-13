@@ -152,7 +152,6 @@ export class Trainer extends BaseModel {
         // document.body.removeChild(a);
     }
 
-
     static initLayer(): LayerModelType[] {
         const inputLayer: InputLayerType = {
             id: crypto.randomUUID(),
