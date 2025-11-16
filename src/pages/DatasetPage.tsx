@@ -21,6 +21,7 @@ export function DatasetPage() {
 
     const nextLetterHandlerRef = useRef<(() => void) | null>(null);
 
+    const [isLoading, setIsLoading] = useState(false);
     const [isCameraRunning, setIsCameraRunnning] = useState(false);
     const [dataPerLabelInput, setDataPerLabelInput] = useState<string | number>('');
     const [isValidDataPerLabel, setIsValidDataPerLabel] = useState<boolean | null>(null);
@@ -64,138 +65,149 @@ export function DatasetPage() {
 
     function downloadButtonHandler() {
         if (!datasetInstanceRef.current) {
-            return Dialog.showError('Dataset instance not found');
+            return Dialog.showError(t.refNotFound);
         }
         datasetInstanceRef.current.downloadDataset();
     }
 
     async function cameraButtonHandler() {
-        if (
-            !dataPerLabelInputElementRef.current ||
-            !nextLetterButtonElementRef.current ||
-            !downloadButtonElementRef.current ||
-            !canvasInstanceRef.current ||
-            !mediapipeInstanceRef.current ||
-            !cameraInstanceRef.current ||
-            !datasetInstanceRef.current ||
-            !canvasInstanceRef.current
-        ) {
-            return Dialog.showError(t.refNotFound);
-        }
+        try {
+            if (
+                !dataPerLabelInputElementRef.current ||
+                !nextLetterButtonElementRef.current ||
+                !downloadButtonElementRef.current ||
+                !canvasInstanceRef.current ||
+                !mediapipeInstanceRef.current ||
+                !cameraInstanceRef.current ||
+                !datasetInstanceRef.current ||
+                !canvasInstanceRef.current
+            ) {
+                return Dialog.showError(t.refNotFound);
+            }
 
-        const dataPerLabelInputElement = dataPerLabelInputElementRef.current;
-        const nextLetterButtonElement = nextLetterButtonElementRef.current;
-        const downloadButtonElement = downloadButtonElementRef.current;
+            const dataPerLabelInputElement = dataPerLabelInputElementRef.current;
+            const nextLetterButtonElement = nextLetterButtonElementRef.current;
+            const downloadButtonElement = downloadButtonElementRef.current;
 
-        const cameraInstance = cameraInstanceRef.current;
-        const canvasInstance = canvasInstanceRef.current;
-        const mediapipeInstance = mediapipeInstanceRef.current;
-        const datasetInstance = datasetInstanceRef.current;
+            const cameraInstance = cameraInstanceRef.current;
+            const canvasInstance = canvasInstanceRef.current;
+            const mediapipeInstance = mediapipeInstanceRef.current;
+            const datasetInstance = datasetInstanceRef.current;
 
-        const parsedValue = Number(dataPerLabelInput);
-        if (
-            isNaN(parsedValue) ||
-            !Number.isInteger(parsedValue) ||
-            parsedValue < 10
-        ) {
-            dataPerLabelInputElementRef.current.focus();
-        }
+            const parsedValue = Number(dataPerLabelInput);
+            if (
+                isNaN(parsedValue) ||
+                !Number.isInteger(parsedValue) ||
+                parsedValue < 10
+            ) {
+                dataPerLabelInputElementRef.current.focus();
+            }
 
-        if (!isCameraRunning) {
-            setIsCameraRunnning(true);
+            if (!isCameraRunning) {
+                setIsCameraRunnning(true);
 
-            const permission = await cameraInstance.requestPermission();
-            if (permission) {
-                const cameraOptionList = await cameraInstance.createOptions();
-                if (cameraOptionList === false) {
-                    return;
-                }
-                setCameraOption(cameraOptionList);
-                cameraInstance.start();
-
-                const handLandmarker = await mediapipeInstance.createHandLandmarker();
-
-                let currentLetterIndex = 0;
-                const letters = [
-                    'A', 'B', 'C', 'D', 'E',
-                    'F', 'G', 'H', 'I', 'J',
-                    'K', 'L', 'M', 'N', 'O',
-                    'P', 'Q', 'R', 'S', 'T',
-                    'U', 'V', 'W', 'X', 'Y', 'Z'
-                ]
-
-                async function callGenerateDatasetLoop() {
-                    nextLetterButtonElement.setAttribute('disabled', '');
-
-                    await cameraInstance.generateDatasetLoop(
-                        letters[currentLetterIndex],
-                        Number(dataPerLabelInputElement.value.trim()),
-                        setDisplayText,
-                        handLandmarker,
-                        canvasInstance,
-                        datasetInstance,
-                    );
-
-                    if (currentLetterIndex >= letters.length - 1) {
-                        setDisplayText(t.finishGenerateDataset);
-                        nextLetterButtonElement.classList.add('hidden');
-                        downloadButtonElement.classList.remove('hidden');
+                const permission = await cameraInstance.requestPermission();
+                if (permission) {
+                    setIsLoading(true);
+                    const cameraOptionList = await cameraInstance.createOptions();
+                    if (cameraOptionList === false) {
                         return;
                     }
-                    nextLetterButtonElement.removeAttribute('disabled');
-                };
+                    setCameraOption(cameraOptionList);
+                    cameraInstance.start();
 
-                nextLetterButtonElement.classList.remove('hidden');
-                setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
-                await callGenerateDatasetLoop();
+                    const handLandmarker = await mediapipeInstance.createHandLandmarker();
+                    setIsLoading(false);
 
-                // Next letter event handler
-                if (nextLetterHandlerRef.current) {
-                    nextLetterButtonElement.removeEventListener('click', nextLetterHandlerRef.current);
-                }
-                const nextLetterHandlerTemp = async () => {
-                    setTimeout(() => {
+                    let currentLetterIndex = 0;
+                    const letters = [
+                        'A', 'B', 'C', 'D', 'E',
+                        'F', 'G', 'H', 'I', 'J',
+                        'K', 'L', 'M', 'N', 'O',
+                        'P', 'Q', 'R', 'S', 'T',
+                        'U', 'V', 'W', 'X', 'Y', 'Z'
+                    ]
 
-                    }, 1000);
-                    ++currentLetterIndex;
+                    async function callGenerateDatasetLoop() {
+                        nextLetterButtonElement.setAttribute('disabled', '');
+
+                        await cameraInstance.generateDatasetLoop(
+                            letters[currentLetterIndex],
+                            Number(dataPerLabelInputElement.value.trim()),
+                            setDisplayText,
+                            handLandmarker,
+                            canvasInstance,
+                            datasetInstance,
+                        );
+
+                        if (currentLetterIndex >= letters.length - 1) {
+                            setDisplayText(t.finishGenerateDataset);
+                            nextLetterButtonElement.classList.add('hidden');
+                            downloadButtonElement.classList.remove('hidden');
+                            return;
+                        }
+                        nextLetterButtonElement.removeAttribute('disabled');
+                    };
+
+                    nextLetterButtonElement.classList.remove('hidden');
                     setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
                     await callGenerateDatasetLoop();
+
+                    // Next letter event handler
+                    if (nextLetterHandlerRef.current) {
+                        nextLetterButtonElement.removeEventListener('click', nextLetterHandlerRef.current);
+                    }
+                    const nextLetterHandlerTemp = async () => {
+                        setTimeout(() => {
+
+                        }, 1000);
+                        ++currentLetterIndex;
+                        setDisplayText(`${letters[currentLetterIndex]}: 0 data`);
+                        await callGenerateDatasetLoop();
+                    }
+                    nextLetterHandlerRef.current = nextLetterHandlerTemp;
+                    nextLetterButtonElement.addEventListener('click', nextLetterHandlerRef.current);
                 }
-                nextLetterHandlerRef.current = nextLetterHandlerTemp;
-                nextLetterButtonElement.addEventListener('click', nextLetterHandlerRef.current);
             } else {
-                setIsCameraRunnning(false);
+                const confirmation = await Dialog.showConfirmation(t.confirmStopCamera);
+
+                if (confirmation.isConfirmed) {
+                    setIsCameraRunnning(false);
+                    setDisplayText('');
+
+                    cameraInstance.stop();
+                    canvasInstance.clear();
+
+                    nextLetterButtonElement.classList.add('hidden');
+                    downloadButtonElement.classList.add('hidden');
+                }
             }
-        } else {
-            const confirmation = await Dialog.showConfirmation(t.confirmStopCamera);
-
-            if (confirmation.isConfirmed) {
-                setIsCameraRunnning(false);
-                setDisplayText('');
-
-                cameraInstance.stop();
-                canvasInstance.clear();
-
-                nextLetterButtonElement.classList.add('hidden');
-                downloadButtonElement.classList.add('hidden');
-            }
+        } catch (error: any) {
+            Dialog.showError(error.message);
+            setIsCameraRunnning(false);
+            setIsLoading(false);
         }
     }
 
     return (
-        <div className="px-4 sm:px-8 pt-24 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-24 pb-8">
             <h1 className="font-bold text-4xl text-center text-orange-500">{t.generateDataset}</h1>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <section>
-                    <ul
-                        className="mt-8 p-4 h-min flex flex-col gap-4 list-decimal list-inside bg-amber-100 border-l-amber-700 border-l-[16px] sm:border-l-[32px] shadow-lg rounded-3xl">
-                        <li>{t.inputDataPerLabel}</li>
-                        <li>{t.pressStartCamera}</li>
-                        <li>{t.enableCameraPermission}</li>
-                        <li>{t.showHand}</li>
-                        <img src="./images/asl_dictionary.png" alt="ASL Dictionary" className="w-full max-w-sm block mx-auto" />
-                    </ul>
+                    <div
+                        className="mt-8 p-4 bg-amber-100 border-l-amber-700 border-l-[16px] sm:border-l-[32px] shadow-lg rounded-3xl">
+                        <ul className="flex flex-col gap-4 list-decimal list-inside">
+                            <li>{t.inputDataPerLabel}</li>
+                            <li>{t.pressStartCamera}</li>
+                            <li>{t.enableCameraPermission}</li>
+                            <li>{t.showHand}</li>
+                        </ul>
+                        <div className="flex flex-col justify-center items-center mt-4">
+                            <img src="./images/asl_dictionary.jpg" alt="ASL Dictionary" className="w-full max-w-sm rounded-lg" />
+                            <a className="text-sm text-blue-500 underline underline-offset-4" href="https://www.freepik.com/free-vector/sign-language-alphabet-hand-drawn-style_2563506.htm#fromView=keyword&page=1&position=0&uuid=81de6c25-ccc4-48e4-a7f3-134b7220dbad&query=American+sign+language+alphabet">Image by freepik</a>
+                        </div>
+                    </div>
                 </section>
 
                 <section className="flex flex-col items-center mt-8">
@@ -238,6 +250,13 @@ export function DatasetPage() {
                             className="border rounded block w-full min-h-96 bg-white">
                         </video>
                         <canvas ref={canvasElementRef} className="absolute top-0 left-0 block w-full min-h-96"></canvas>
+
+                        <div className={`${isLoading ? 'flex' : 'hidden'} absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30
+                        w-full h-full flex-col justify-center items-center bg-black/50`}>
+                            <div className="w-24 h-24 border-8 border-blue-500 border-t-white rounded-full animate-spin">
+                            </div>
+                            <p className="mt-4 text-lg text-white">Loading...</p>
+                        </div >
                     </div>
 
                     <select

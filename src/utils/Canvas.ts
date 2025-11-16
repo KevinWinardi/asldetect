@@ -1,6 +1,5 @@
 import { drawLandmarks, drawConnectors } from '@mediapipe/drawing_utils';
 import { HAND_CONNECTIONS } from '@mediapipe/hands';
-import { Dialog } from "./Dialog";
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 
 export class Canvas {
@@ -20,7 +19,7 @@ export class Canvas {
             this.canvasElement.width = videoWidth;
             this.canvasElement.height = videoHeight;
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 
@@ -40,7 +39,7 @@ export class Canvas {
                 lineWidth: 2
             });
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 
@@ -52,7 +51,7 @@ export class Canvas {
 
             this.ctx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 }

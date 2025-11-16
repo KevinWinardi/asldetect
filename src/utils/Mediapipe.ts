@@ -1,5 +1,4 @@
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
-import { Dialog } from './Dialog';
 
 // Copyright 2023 The MediaPipe Authors.
 
@@ -39,7 +38,7 @@ export class Mediapipe {
 
             return this.handLandmarker;
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 }

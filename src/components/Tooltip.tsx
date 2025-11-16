@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export function Tooltip({
     text = "",
@@ -8,6 +8,19 @@ export function Tooltip({
     html?: React.ReactNode;
 }) {
     const [isShow, setIsShow] = useState(false);
+    const popupRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+                setIsShow(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <button
@@ -16,6 +29,7 @@ export function Tooltip({
             <i className="fa-solid fa-circle-info text-xl text-blue-500"></i>
 
             <div
+                ref={popupRef}
                 className={`
                     ${isShow ? 'opacity-100 visible' : 'opacity-0 invisible'}
                     absolute bottom-full right-0 overflow-y-auto

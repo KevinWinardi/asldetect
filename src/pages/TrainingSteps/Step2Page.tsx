@@ -10,15 +10,15 @@ function InformationHelper() {
         <section className="flex flex-col gap-4 mt-4">
             <p>{t.splitInfo}</p>
             <div className="p-2 border rounded sahdow">
-                <p className="font-semibold">{t.train} Data</p>
+                <p className="font-semibold">{t.trainData}</p>
                 <p className="mt-2">{t.trainInfo}</p>
             </div>
             <div className="p-2 border rounded sahdow">
-                <p className="font-semibold">{t.val} Data</p>
+                <p className="font-semibold">{t.valData}</p>
                 <p className="mt-2">{t.valInfo}</p>
             </div>
             <div className="p-2 border rounded sahdow">
-                <p className="font-semibold">{t.test} Data</p>
+                <p className="font-semibold">{t.testData}</p>
                 <p className="mt-2">{t.testInfo}</p>
             </div>
         </section>

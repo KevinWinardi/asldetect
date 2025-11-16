@@ -1,5 +1,4 @@
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
-import { Dialog } from "./Dialog";
 import type { Canvas } from "./Canvas";
 import type { Dataset } from "./Dataset";
 import * as tf from '@tensorflow/tfjs';
@@ -29,8 +28,7 @@ export class Camera {
             } else if (error.name === 'NotFoundError') {
                 message = 'Camera Not Found';
             }
-            Dialog.showError(message ?? 'Something error');
-            return false;
+            throw new Error(message ?? 'Something error');
         }
     }
 
@@ -48,8 +46,7 @@ export class Camera {
 
             return options;
         } catch (error: any) {
-            Dialog.showError(error.message);
-            return false;
+            throw new Error(error.message);
         }
     }
 
@@ -77,7 +74,7 @@ export class Camera {
             this.videoElement.srcObject = stream;
             await this.videoElement.play();
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 
@@ -93,7 +90,7 @@ export class Camera {
             this.videoElement.srcObject = stream;
             await this.videoElement.play();
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 
@@ -113,7 +110,7 @@ export class Camera {
                 this.videoElement.srcObject = null;
             }
         } catch (error: any) {
-            Dialog.showError(error.message);
+            throw new Error(error.message);
         }
     }
 
@@ -173,33 +170,33 @@ export class Camera {
                         resolve();
                     }
                 } catch (error: any) {
-                    Dialog.showError(error.message);
                     reject(error);
+                    throw new Error(error.message);
                 }
             }
-
             loop();
         });
     }
 
     async predictionLoop({
-        setDisplayText,
+        setPredictionOutput,
+        setConfidencePrediction,
         handLandmarker,
         canvasInstance,
         mean,
         std,
         label,
-        currentKeyModel,
+        model
     }: {
-        setDisplayText: React.Dispatch<React.SetStateAction<string>>,
+        setPredictionOutput: React.Dispatch<React.SetStateAction<string>>,
+        setConfidencePrediction: React.Dispatch<React.SetStateAction<number>>,
         handLandmarker: HandLandmarker | undefined,
         canvasInstance: Canvas | null,
         mean: tf.Tensor1D,
         std: tf.Tensor1D,
         label: string[],
-        currentKeyModel: string,
+        model: tf.LayersModel,
     }): Promise<void> {
-        const model = await Predictor.loadModel(currentKeyModel);
 
         return new Promise((_, reject) => {
             const loop = () => {
@@ -223,18 +220,19 @@ export class Camera {
                     if (results.landmarks.length != 0) {
                         const landmarks = results.landmarks[0]; // get first hands
                         canvasInstance.drawLandmark(landmarks);
-                        const predictedLabel = Predictor.predict({
+                        const {predictedLabel, confidence} = Predictor.predict({
                             landmarks,
                             mean,
                             std,
                             label,
                             model
                         });
-                        setDisplayText(predictedLabel);
+                        setPredictionOutput(predictedLabel);
+                        setConfidencePrediction(confidence);
                     }
                 } catch (error: any) {
-                    Dialog.showError(error.message);
                     reject(error);
+                    throw new Error(error.message);
                 }
                 this.detectionLoopId = requestAnimationFrame(loop);
             }

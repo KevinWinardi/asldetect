@@ -1,10 +1,9 @@
 import * as tf from '@tensorflow/tfjs';
 import type { LayerModelType } from '../types/layerModelType';
 import type { CompileModelType } from '../types/compileModelType';
-import { Dialog } from './Dialog';
 import type { EvaluationTrainValType } from '../types/evaluationTrainValType';
-import type { evaluationTestType } from '../types/evaluationTestType';
 import type { FitModelType } from '../types/fitModelType';
+import type { EvaluationTestType } from '../types/evaluationTestType';
 
 export class BaseModel {
     protected model: tf.Sequential;
@@ -80,11 +79,11 @@ export class BaseModel {
         compileModel: CompileModelType,
         fitModel: FitModelType,
         evaluationTrainVal: EvaluationTrainValType,
-        evaluationTest: evaluationTestType,
+        evaluationTest: EvaluationTestType,
         createdAt: string,
     }> {
         let data;
-        
+
         if (currentKeyModel === 'model_default') {
             const res = await fetch('model_default_information.json');
             data = await res.json();
@@ -137,8 +136,7 @@ export class BaseModel {
             }
             return models;
         } catch (error: any) {
-            Dialog.showError(error.message);
-            return false;
+            throw new Error(error.message);
         }
     }
 }

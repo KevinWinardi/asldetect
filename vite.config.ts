@@ -14,7 +14,6 @@ export default defineConfig({
                 'model_default.json',
                 'model_default.weights.bin',
                 'hand_landmarker.task',
-                'asl_dataset.csv',
             ],
             manifest: {
                 "name": "ASL Detect",

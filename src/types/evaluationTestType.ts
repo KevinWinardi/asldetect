@@ -1,4 +1,4 @@
-export type evaluationTestType={
+export type EvaluationTestType={
     acc: number,
     loss: number,
 }

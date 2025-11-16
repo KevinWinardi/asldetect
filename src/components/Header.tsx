@@ -20,9 +20,9 @@ export function Header() {
                         <nav>
                             <ul className="flex gap-8 font-semibold">
                                 <li><Link to='/' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.home}</Link></li>
-                                <li><Link to='/detection' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.detection}</Link></li>
                                 <li><Link to='/dataset' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">Dataset</Link></li>
                                 <li><Link to='/training' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.training}</Link></li>
+                                <li><Link to='/detection' className="block transition duration-500 hover:underline underline-offset-4 hover:opacity-75 hover:scale-90">{t.detection}</Link></li>
                             </ul>
                         </nav>
                     </div>
@@ -57,15 +57,6 @@ export function Header() {
                             </li>
                             <li>
                                 <Link
-                                    to="/detection"
-                                    className="block p-4 hover:bg-blue-500 hover:text-white transition"
-                                    onClick={() => setOpenMenu(false)}
-                                >
-                                    {t.detection}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
                                     to="/dataset"
                                     className="block p-4 hover:bg-blue-500 hover:text-white transition"
                                     onClick={() => setOpenMenu(false)}
@@ -80,6 +71,15 @@ export function Header() {
                                     onClick={() => setOpenMenu(false)}
                                 >
                                     {t.training}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/detection"
+                                    className="block p-4 hover:bg-blue-500 hover:text-white transition"
+                                    onClick={() => setOpenMenu(false)}
+                                >
+                                    {t.detection}
                                 </Link>
                             </li>
                         </ul>

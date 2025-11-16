@@ -30,7 +30,7 @@ export function SettingPage() {
                     </button>
                 </section>
 
-                <section className="flex-1 p-4 border rounded-se rounded-b shadow-2xl">
+                <section className="bg-white flex-1 p-4 border rounded-se rounded-b shadow-2xl">
                     {tabs[currentIndexTab]}
                 </section>
             </div>

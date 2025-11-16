@@ -9,6 +9,8 @@ import { Tooltip } from "../../components/Tooltip";
 import type { FitModelType } from "../../types/fitModelType";
 import { Trainer } from "../../utils/Trainer";
 import { useLanguage } from "../../contexts/LanguageContext";
+import type { EvaluationTestType } from "../../types/evaluationTestType";
+import type { EvaluationTrainValType } from "../../types/evaluationTrainValType";
 
 export function Step5Page({
     isStep5Valid,
@@ -47,9 +49,10 @@ export function Step5Page({
     const { t } = useLanguage();
     const [progress, setProgress] = useState('');
     const [isFirstTraining, setIsFirstTraining] = useState(true);
-    const [evalTest, setEvalTest] = useState<{ acc: number, loss: number } | null>(null);
+    const [evaluationTest, setEvaluationTest] = useState<EvaluationTestType | null>(null);
     const [isModelSaved, setIsModelSaved] = useState(false);
 
+    const evaluationTrainValRef = useRef<EvaluationTrainValType>([]);
     const meanStdLabelRef = useRef<{
         mean: number[],
         std: number[],
@@ -64,7 +67,7 @@ export function Step5Page({
     const lossTrainValCanvasElementRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
-        trainerInstanceRef.current = new Trainer(setProgress);
+        trainerInstanceRef.current = new Trainer();
 
         return (() => {
             if (trainerInstanceRef.current && isTraining) {
@@ -88,15 +91,16 @@ export function Step5Page({
                 layerModel,
                 compileModel,
                 fitModel,
+                setProgress,
             );
+            evaluationTrainValRef.current = evaluationTrainVal;
+            setEvaluationTest({ loss: evaluationTest.loss, acc: evaluationTest.acc });
             meanStdLabelRef.current = {
                 mean,
                 std,
                 label,
             };
             setIsTraining(false);
-
-            setEvalTest({ loss: evaluationTest.loss, acc: evaluationTest.acc });
 
             ChartJS.createEvalChart({
                 element: accTrainValCanvasElementRef.current,
@@ -108,7 +112,7 @@ export function Step5Page({
                 element: lossTrainValCanvasElementRef.current,
                 type: 'loss',
                 data: evaluationTrainVal,
-                title: t.evalPlot, 
+                title: t.evalPlot,
             });
             setIsFirstTraining(false);
         } catch (error: any) {
@@ -127,7 +131,7 @@ export function Step5Page({
 
     async function saveModelHandler(): Promise<void> {
         try {
-            if (!trainerInstanceRef.current || !evalTest) {
+            if (!trainerInstanceRef.current || !evaluationTest) {
                 throw new Error(t.refNotFound);
             }
             const name = await Dialog.showInput({
@@ -163,6 +167,8 @@ export function Step5Page({
                 layerModel: layerModel,
                 compileModel: compileModel,
                 fitModel: fitModel,
+                evaluationTrainVal: evaluationTrainValRef.current,
+                evaluationTest: evaluationTest,
             })
         } catch (error: any) {
             Dialog.showError(error.message);
@@ -328,8 +334,8 @@ export function Step5Page({
                 <canvas ref={lossTrainValCanvasElementRef}></canvas>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                    <p className="p-2 text-green-500 border rounded shadow">{t.accTest}: {evalTest?.acc.toFixed(4)}</p>
-                    <p className="p-2 text-red-500 border rounded shadow">{t.lossTest}: {evalTest?.loss.toFixed(4)}</p>
+                    <p className="p-2 text-green-500 border rounded shadow">{t.accTest}: {evaluationTest?.acc.toFixed(4)}</p>
+                    <p className="p-2 text-red-500 border rounded shadow">{t.lossTest}: {evaluationTest?.loss.toFixed(4)}</p>
                 </div>
             </section>
         </>

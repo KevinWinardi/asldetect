@@ -12,16 +12,14 @@ export function App() {
         <>
             <Header></Header>
 
-            <main className="min-h-dvh flex justify-center bg-gray-100 overflow-hidden">
-                <div className="w-full max-w-7xl">
-                    <Routes>
-                        <Route path="/" element={<HomePage />}></Route>
-                        <Route path="/detection" element={<DetectionPage />}></Route>
-                        <Route path="/training" element={<TrainingPage />}></Route>
-                        <Route path="/dataset" element={<DatasetPage />}></Route>
-                        <Route path="/setting" element={<SettingPage />}></Route>
-                    </Routes>
-                </div>
+            <main className="min-h-dvh bg-gray-100 overflow-hidden">
+                <Routes>
+                    <Route path="/" element={<HomePage />}></Route>
+                    <Route path="/detection" element={<DetectionPage />}></Route>
+                    <Route path="/training" element={<TrainingPage />}></Route>
+                    <Route path="/dataset" element={<DatasetPage />}></Route>
+                    <Route path="/setting" element={<SettingPage />}></Route>
+                </Routes>
             </main>
 
             <Footer></Footer>

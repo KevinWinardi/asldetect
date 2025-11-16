@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { BaseModel } from "../../utils/BaseModel";
 import type { SplitDataType } from "../../types/splitDataType";
 import { ChartJS } from "../../utils/ChartJS";
-import type { evaluationTestType } from "../../types/evaluationTestType";
 import { Dialog } from "../../utils/Dialog";
 import type { FitModelType } from "../../types/fitModelType";
 import type { CompileModelType } from "../../types/compileModelType";
 import type { LayerModelType } from "../../types/layerModelType";
 import { Tooltip } from "../../components/Tooltip";
 import { useLanguage } from "../../contexts/LanguageContext";
+import type { EvaluationTestType } from "../../types/evaluationTestType";
 
 export function Tab1Page() {
     const { t } = useLanguage();
@@ -22,7 +22,7 @@ export function Tab1Page() {
         layerModel: LayerModelType[],
         compileModel: CompileModelType,
         fitModel: FitModelType,
-        evaluationTest: evaluationTestType,
+        evaluationTest: EvaluationTestType,
         createdAt: string,
     } | null>(null);
 

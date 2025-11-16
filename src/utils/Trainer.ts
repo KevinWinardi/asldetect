@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { CompileModelType } from '../types/compileModelType';
 import type { EvaluationTrainValType } from '../types/evaluationTrainValType';
 import type { FitModelType } from '../types/fitModelType';
@@ -6,23 +7,16 @@ import type { SplitDataType } from '../types/splitDataType';
 import { BaseModel } from './BaseModel';
 import { Dataset } from './Dataset';
 import * as tf from '@tensorflow/tfjs';
+import type { EvaluationTestType } from '../types/evaluationTestType';
 
 export class Trainer extends BaseModel {
-    private setProgress: React.Dispatch<React.SetStateAction<string>>;
-    private evaluationTrainVal: EvaluationTrainValType = [];
-    private evaluationTest = { loss: 0, acc: 0 };
-
-    constructor(setProgress: React.Dispatch<React.SetStateAction<string>>) {
-        super();
-        this.setProgress = setProgress;
-    }
-
     async startTraining(
         dataset: tf.data.CSVDataset | null,
         splitData: SplitDataType,
         layerModel: LayerModelType[],
         compileModel: CompileModelType,
-        fitModel: FitModelType
+        fitModel: FitModelType,
+        setProgress: React.Dispatch<React.SetStateAction<string>>,
     ) {
         if (!fitModel.epochs || !fitModel.batchSize) {
             throw new Error('Epochs and batch size cannot be null');
@@ -30,14 +24,17 @@ export class Trainer extends BaseModel {
 
         await tf.setBackend('webgl');
         await tf.ready();
-        this.setProgress('Preprocessing data...');
+
+        const evaluationTrainVal: EvaluationTrainValType = [];
+
+        setProgress('Preprocessing data...');
         const { xTrain, xVal, xTest, yTrain, yVal, yTest, mean, std, uniqueLabels } =
             await Dataset.preprocessDataset(dataset, splitData);
 
-        this.setProgress('Create sequential model...');
+        setProgress('Create sequential model...');
         this.createModel(layerModel, compileModel);
 
-        this.setProgress('Training model...');
+        setProgress('Training model...');
 
         await this.model.fit(xTrain, yTrain, {
             epochs: fitModel.epochs,
@@ -46,9 +43,9 @@ export class Trainer extends BaseModel {
             callbacks: {
                 onEpochEnd: (epoch, logs) => {
                     if (logs) {
-                        this.setProgress(`Training on epoch ${epoch}...`);
+                        setProgress(`Training on epoch ${epoch}...`);
 
-                        this.evaluationTrainVal.push({
+                        evaluationTrainVal.push({
                             epoch: epoch + 1,
                             loss: logs.loss,
                             acc: logs.acc,
@@ -60,20 +57,21 @@ export class Trainer extends BaseModel {
             },
         });
 
-        await this._evaluateModel(xTest, yTest);
+        const evaluationTest = await this._evaluateModel(xTest, yTest, setProgress);
+
         return {
-            evaluationTrainVal: this.evaluationTrainVal,
-            evaluationTest: this.evaluationTest,
+            evaluationTrainVal: evaluationTrainVal,
+            evaluationTest: evaluationTest,
             mean: Array.from(await mean.data()),
             std: Array.from(await std.data()),
             label: uniqueLabels
         };
     }
 
-    async _evaluateModel(xTest: tf.Tensor, yTest: tf.Tensor) {
-        this.setProgress('Evaluate model...');
+    async _evaluateModel(xTest: tf.Tensor, yTest: tf.Tensor, setProgress: React.Dispatch<React.SetStateAction<string>>) {
+        setProgress('Evaluate model...');
         const [loss, acc] = this.model.evaluate(xTest, yTest) as tf.Scalar[];
-        this.evaluationTest = {
+        return {
             loss: loss.dataSync()[0],
             acc: acc.dataSync()[0],
         };
@@ -95,6 +93,8 @@ export class Trainer extends BaseModel {
         layerModel,
         compileModel,
         fitModel,
+        evaluationTrainVal,
+        evaluationTest,
     }: {
         name: string,
         totalData: number,
@@ -105,6 +105,8 @@ export class Trainer extends BaseModel {
         layerModel: LayerModelType[],
         compileModel: CompileModelType,
         fitModel: FitModelType,
+        evaluationTrainVal: EvaluationTrainValType,
+        evaluationTest: EvaluationTestType,
     }): Promise<void> {
         const key = 'model_' + name.toLowerCase().replace(/\s+/g, '_');
         localStorage.setItem(
@@ -120,8 +122,8 @@ export class Trainer extends BaseModel {
                 layerModel: layerModel,
                 compileModel: compileModel,
                 fitModel: fitModel,
-                evaluationTrainVal: this.evaluationTrainVal,
-                evaluationTest: this.evaluationTest,
+                evaluationTrainVal: evaluationTrainVal,
+                evaluationTest: evaluationTest,
                 createdAt: new Date(),
             }),
         );

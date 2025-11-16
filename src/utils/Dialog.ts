@@ -70,16 +70,6 @@ export class Dialog {
         });
     }
 
-    static showLoading(): Promise<SweetAlertResult<any>> {
-        return Swal.fire({
-            title: 'Loading...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading()
-            },
-        });
-    }
-
     static closeDialog(): void {
         return Swal.close();
     }
