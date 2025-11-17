@@ -16,6 +16,7 @@ export class ChartJS {
     }) {
         if (!element) throw new Error('Canvas not found');
 
+        const labels = data.map(row => row.epoch);
         const datasets = type === 'acc'
             ? [
                 {
@@ -44,6 +45,7 @@ export class ChartJS {
 
         const existing = Chart.getChart(element);
         if (existing) {
+            existing.data.labels = labels;
             existing.data.datasets = datasets;
             existing.update('active');
             return existing;
@@ -54,7 +56,7 @@ export class ChartJS {
             {
                 type: 'line',
                 data: {
-                    labels: data.map(row => row.epoch),
+                    labels: labels,
                     datasets: datasets,
                 },
                 options: {

@@ -71,7 +71,7 @@ export function HomePage() {
                     >
                         <div
                             onClick={() => openTab === 0 ? setOpenTab(null) : setOpenTab(0)}
-                            className="flex justify-between gap-4 cursor-pointer transition-opacity duration-500 hover:opacity-75">
+                            className="flex justify-between items-baseline gap-4 cursor-pointer transition-opacity duration-500 hover:opacity-75">
                             <h3 className="font-extrabold">{t.offlineModeTitleFaq}</h3>
                             <i className={`fa-solid fa-angle-down transition duration-500 ${openTab === 0 ? 'rotate-180' : 'rotate-0'}`}></i>
                         </div>
@@ -86,7 +86,7 @@ export function HomePage() {
                     >
                         <div
                             onClick={() => openTab === 1 ? setOpenTab(null) : setOpenTab(1)}
-                            className="flex justify-between gap-4 cursor-pointer transition-opacity duration-500 hover:opacity-75">
+                            className="flex justify-between items-baseline gap-4 cursor-pointer transition-opacity duration-500 hover:opacity-75">
                             <h3 className="font-extrabold">{t.installAppTitleFAq}</h3>
                             <i className={`fa-solid fa-angle-down transition duration-500 ${openTab === 1 ? 'rotate-180' : 'rotate-0'}`}></i>
                         </div>
@@ -104,7 +104,7 @@ export function HomePage() {
                     >
                         <div
                             onClick={() => openTab === 2 ? setOpenTab(null) : setOpenTab(2)}
-                            className="flex justify-between gap-4 cursor-pointer transition-opacity duration-500 hover:opacity-75">
+                            className="flex justify-between items-baseline gap-4 cursor-pointer transition-opacity duration-500 hover:opacity-75">
                             <h3 className="font-extrabold">{t.storageTitleFaq}</h3>
                             <i className={`fa-solid fa-angle-down transition duration-500 ${openTab === 2 ? 'rotate-180' : 'rotate-0'}`}></i>
                         </div>
