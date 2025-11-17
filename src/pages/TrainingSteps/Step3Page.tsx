@@ -383,7 +383,7 @@ export function Step3Page({
                                 </div>
                                 {
                                     isStep3Valid[`rate-${layer.id}`] === false && (
-                                        <p className="text-red-500 text-sm">{t.dropoutInvalid}</p>
+                                        <p className="text-red-500 text-sm">{t.rateInvalid}</p>
                                     )
                                 }
                             </div>
