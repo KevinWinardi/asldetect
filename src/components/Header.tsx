@@ -15,7 +15,7 @@ export function Header() {
                     </Link>
                 </section>
 
-                <section className="hidden sm:flex flex-[3] justify-between items-center">
+                <section className="hidden sm:flex flex-[3] justify-between items-center gap-4">
                     <div>
                         <nav>
                             <ul className="flex gap-8 font-semibold">

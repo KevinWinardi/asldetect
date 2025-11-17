@@ -587,7 +587,7 @@ export function Tab1Page() {
                     <p className="p-2 text-green-500 border rounded shadow">{t.accTest}: {currentInformationModel?.evaluationTest.acc.toFixed(4)}</p>
                     <p className="p-2 text-red-500 border rounded shadow">{t.lossTest}: {currentInformationModel?.evaluationTest.loss.toFixed(4)}</p>
                 </div>
-                <p className="text-sm text-gray-500 italic">{t.createdAt}: {new Date(currentInformationModel!.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-500 italic">{t.createdAt}: {new Date(currentInformationModel?.createdAt ?? Date.now()).toLocaleDateString()}</p>
             </div>
         </>
     );

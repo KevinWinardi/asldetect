@@ -85,7 +85,7 @@ export default defineConfig({
                             request.destination === 'style' ||
                             request.destination === 'font' ||
                             request.destination === 'image',
-                        handler: 'CacheFirst',
+                        handler: 'StaleWhileRevalidate',
                         options: {
                             cacheName: 'asset-cache',
                             expiration: {
