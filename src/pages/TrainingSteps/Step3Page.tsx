@@ -359,8 +359,8 @@ export function Step3Page({
                                         onChange={(e) => {
                                             const value = e.target.value.trim();
                                             if (value === '') {
-                                                setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: validity }));
-                                                setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dense' ? { ...l, rate: value } : l));
+                                                setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: false }));
+                                                setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dropout' ? { ...l, rate: null } : l));
                                                 return;
                                             }
 
@@ -371,7 +371,7 @@ export function Step3Page({
                                             }
 
                                             setIsStep3Valid(prev => ({ ...prev, [`rate-${layer.id}`]: validity }));
-                                            setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dense' ? { ...l, rate: parsedValue } : l));
+                                            setLayerModel(prev => prev.map(l => l.id === layer.id && l.type === 'dropout' ? { ...l, rate: parsedValue } : l));
                                         }}
                                         id={`rate-${layer.id}`}
                                         type="number"

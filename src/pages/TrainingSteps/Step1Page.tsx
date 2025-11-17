@@ -51,7 +51,7 @@ export function Step1Page({
                     const preview = rows.slice(0, 11).map(r => r.split(','));
                     setPreviewData(preview);
 
-                    setTotalData(rows.length - 2); // 1 new line + 1 header 
+                    setTotalData(rows.length - 1); 
                 }
                 reader.readAsText(file);
 

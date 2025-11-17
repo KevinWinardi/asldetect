@@ -63,9 +63,9 @@ export function Step2Page({
     }, [splitData]);
 
     const inputs = [
-        { id: 'train', label: t.train },
-        { id: 'val', label: t.val },
-        { id: 'test', label: t.test },
+        { id: 'train', label: t.trainData },
+        { id: 'val', label: t.valData },
+        { id: 'test', label: t.testData },
     ]
 
     return (
